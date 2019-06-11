@@ -1,0 +1,15 @@
+{
+  "name": "bip44",
+  "version": "1.0.0",
+  "description": "A node js implementation of bip 32 39 44",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Anuj",
+  "license": "ISC",
+  "dependencies": {
+    "bip39": "^3.0.2",
+    "bitcore-bip39": "^0.16.0"
+  }
+}
