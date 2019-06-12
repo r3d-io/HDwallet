@@ -1,3 +1,4 @@
+const Web3 = require('web3');
 const bip39 = require('bip39')
 const hdkey = require('hdkey')
 const util = require('ethereumjs-util');
@@ -28,15 +29,29 @@ const tx = new ethTx(params);
 tx.sign(addrNode._privateKey);
 const serializedTx = tx.serialize()
 
+const web3 = new Web3("ws://localhost:8546");
+
+web3.eth.net.isListening()
+   .then(() => console.log('is connected'))
+   .catch(e => console.log('Wow. Something went wrong'));
+
+web3.eth.sendSignedTransaction( `0x${serializedTx.toString('hex')}`, 
+  (error, result) => { 
+      if (error) { console.log(`Error: ${error}`); }  
+      else { console.log(`Result: ${result}`); } 
+  } 
+ );
+
 console.log(mnemonic + "\n" + seed.toString('hex') + "\n" + address )
 
-const readline = require('readline').createInterface({
-  input: process.stdin,
-  output: process.stdout
-})
-readline.question('Enter seed length 12 15 18 21 24', (seedlength) => {
+// const readline = require('readline').createInterface({
+//   input: process.stdin,
+//   output: process.stdout
+// })
+// readline.question('Enter seed length 12 15 18 21 24', (seedlength) => {
   
-  readline.close()
-})
+//   readline.close()
+// })
 
 // https://iancoleman.io/bip39/
+// geth --testnet --ws --wsorigins="*"
