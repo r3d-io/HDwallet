@@ -1,8 +1,10 @@
 const bip39 = require('bip39')
 const hdkey = require('hdkey')
 const util = require('ethereumjs-util');
+const ethTx = require('ethereumjs-tx').Transaction
 
-const mnemonic = bip39.generateMnemonic()
+let mnemonic = bip39.generateMnemonic()
+mnemonic = "require pulse curve cage relief material voyage general act virus fabric wheat"
 const seed = bip39.mnemonicToSeedSync(mnemonic)
 
 const root = hdkey.fromMasterSeed(seed);
@@ -13,6 +15,18 @@ const addrNode = root.derive("m/44'/60'/0'/0/0"); //line 1
 const pubKey = util.privateToPublic(addrNode._privateKey);
 const addr = util.publicToAddress(pubKey).toString('hex');
 const address = util.toChecksumAddress(addr);
+
+const params = {
+  nonce: 0,
+  to: '0x4584158529818ef77D1142bEeb0b6648BD8eDb2f',
+  value: '0.1',
+  gasPrice: 5000000000,
+  gasLimit: 21000,
+  chainId: 3
+};
+const tx = new ethTx(params);
+tx.sign(addrNode._privateKey);
+const serializedTx = tx.serialize()
 
 console.log(mnemonic + "\n" + seed.toString('hex') + "\n" + address )
 
