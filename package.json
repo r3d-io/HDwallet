@@ -10,6 +10,6 @@
   "license": "ISC",
   "dependencies": {
     "bip39": "^3.0.2",
-    "bitcore-bip39": "^0.16.0"
+    "hdkey": "^1.1.1"
   }
 }
