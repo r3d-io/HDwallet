@@ -73,7 +73,7 @@ inquirer
         default: '0'
       },
     ])
-    path = "m/44'/" + "60'/0'/0/0"
+    path = "m/44'/"
     if (answers.currencyType == "btc"){
       path = path + "0'/"
     }
