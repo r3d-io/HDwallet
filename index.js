@@ -3,41 +3,114 @@ const bip39 = require('bip39')
 const hdkey = require('hdkey')
 const util = require('ethereumjs-util');
 const ethTx = require('ethereumjs-tx').Transaction
+const inquirer = require('inquirer');
 
-let mnemonic = bip39.generateMnemonic()
-mnemonic = "require pulse curve cage relief material voyage general act virus fabric wheat"
-const seed = bip39.mnemonicToSeedSync(mnemonic)
+inquirer
+  .prompt([
+    {
+      type: 'list',
+      name: 'options',
+      message: 'Which operation do you want to perform?',
+      choices: ['Generate mnemonic', 'Generate key', 'Generate address'],
+    },
+  ])
+  .then(answers => {
+    if(answers.options == "Generate mnemonic"){
+      generateMnemonic()
+    }
+    else if(answers.options == "Generate key"){
+      generateKey()
+    }
+    else if(answers.options == "Generate address"){
+      generateAddress()
+    }
+  });
 
-const root = hdkey.fromMasterSeed(seed);
+  async function getMnemonic(){
+    answers = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'options',
+        message: 'Do you have a mnemonic or not?',
+        choices: ['Yes', 'No'],
+      },
+    ])
 
-const addrNode = root.derive("m/44'/60'/0'/0/0");
-const pubKey = util.privateToPublic(addrNode._privateKey);
-const addr = util.publicToAddress(pubKey).toString('hex');
-const address = util.toChecksumAddress(addr);
+    if(answers.options == "Yes"){
+      response = await inquirer.prompt([
+        {
+          name: 'mnemonic',
+          message: 'Enter your mnemonic',
+          default: 'require pulse curve cage relief material voyage general act virus fabric wheat',
+        },
+      ])
+      mnemonic = response.mnemonic
+      return mnemonic
+    }
+    else if(answers.options == "No"){
+      mnemonic = generateMnemonic()
+      return mnemonic
+    }
+  }
 
-const params = {
-  nonce: 0,
-  to: '0x4584158529818ef77D1142bEeb0b6648BD8eDb2f',
-  value: '0.1',
-  gasPrice: 5000000000,
-  gasLimit: 21000,
-  chainId: 3
-};
+  async function getAddress(){
+    answers = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'currencyType',
+        message: 'Which currency you want to use etherum or bitcoin',
+        choices: ['eth', 'btc'],
+      },
+      {
+        type: 'list',
+        name: 'changeType',
+        message: 'Please specify if it is an internal or external address?',
+        choices: ['Internal', 'External'],
+      },
+      {
+        name: 'addressNum',
+        message: 'Enter the number for which you want to generate address ?',
+        default: '0'
+      },
+    ])
+    path = "m/44'/" + "60'/0'/0/0"
+    if (answers.currencyType == "btc"){
+      path = path + "0'/"
+    }
+    else if(answers.currencyType == "eth"){
+      path = path + "60'/"
+    }
+    if (answers.changeType == "Internal"){
+      path = path + "0'/"
+    }
+    else if(answers.changeType == "External"){
+      path = path + "1'/"
+    }
+    path = path + answers.addressNum
+    return path
+  }
 
-const tx = new ethTx(params);
-tx.sign(addrNode._privateKey);
-const serializedTx = tx.serialize()
+  function generateMnemonic(){
+    let mnemonic = bip39.generateMnemonic()
+    console.log(mnemonic)
+    return mnemonic
+  }
 
-const web3 = new Web3("ws://localhost:8546");
-web3.eth.net.isListening()
-   .then(() => console.log('is connected'))
-   .catch(e => console.log('Wow. Something went wrong'));
+  async function generateKey(mnemonic){
+    mnemonic = await getMnemonic()
+    const seed =  bip39.mnemonicToSeedSync(mnemonic)
+    const rootNode =  hdkey.fromMasterSeed(seed)
+    console.log("Master private key" + rootNode._privateKey.toString('hex') + "\nMaster public key" + rootNode._publicKey.toString('hex') )
+    return rootNode
+  }
 
-web3.eth.sendSignedTransaction( `0x${serializedTx.toString('hex')}`, 
-  (error, result) => { 
-      if (error) { console.log(`Error: ${error}`); }  
-      else { console.log(`Result: ${result}`); } 
-  } 
- );
-
-console.log(mnemonic + "\n" + seed.toString('hex') + "\n" + address )
+  async function generateAddress(){
+    rootNode = await getKey()
+    path = await getAddress()
+    const addrNode = rootNode.derive(path);
+    const pubKey = util.privateToPublic(addrNode._privateKey);
+    const addr = util.publicToAddress(pubKey).toString('hex');
+    const address = util.toChecksumAddress(addr);
+    console.log("Address " + address)
+    return address
+  }
