@@ -5,8 +5,6 @@ const util = require('ethereumjs-util');
 const ethTx = require('ethereumjs-tx').Transaction
 var inquirer = require('inquirer');
 
-// console.log(mnemonic + "\n" + seed.toString('hex') + "\n" + addr + "\n" + address )
-
 inquirer
   .prompt([
     {
@@ -34,8 +32,8 @@ inquirer
     return mnemonic
   }
 
-  function getKey(){
-    inquirer.prompt([
+  async function getKey(){
+    answers = await inquirer.prompt([
       {
         type: 'list',
         name: 'options',
@@ -43,40 +41,39 @@ inquirer
         choices: ['Yes', 'No'],
       },
     ])
-    .then(answers => {
-      if(answers.options == "Yes"){
-        inquirer.prompt([
-          {
-            name: 'mnemonic',
-            message: 'Enter your mnemonic',
-            // default: 'require pulse curve cage relief material voyage general act virus fabric wheat',
-          },
-        ])
-        .then(answers => {
-          mnemonic= answers.mnemonic
-          generateKey(mnemonic)
-        });
-      }
-      else if(answers.options == "No"){
-        mnemonic = generateMnemonic()
-        generateKey(mnemonic)
-      }
-    });
+
+    if(answers.options == "Yes"){
+      answer = await inquirer.prompt([
+        {
+          name: 'mnemonic',
+          message: 'Enter your mnemonic',
+          default: 'require pulse curve cage relief material voyage general act virus fabric wheat',
+        },
+      ])
+      mnemonic= answer.mnemonic
+      rootNode = await generateKey(mnemonic)
+      return rootNode
+    }
+    else if(answers.options == "No"){
+      mnemonic = generateMnemonic()
+      rootNode = await generateKey(mnemonic)
+      return rootNode
+    }
   }
 
-  function generateKey(mnemonic){
-    const seed = bip39.mnemonicToSeedSync(mnemonic)
-    const rootNode = hdkey.fromMasterSeed(seed)
+  async function generateKey(mnemonic){
+    const seed = await bip39.mnemonicToSeedSync(mnemonic)
+    const rootNode = await hdkey.fromMasterSeed(seed)
     console.log("Master private key" + rootNode._privateKey.toString('hex') + "\nMaster public key" + rootNode._publicKey.toString('hex') )
     return rootNode
   }
 
-  function generateAddress(){
-    rootNode = getKey()
+  async function generateAddress(){
+    rootNode = await getKey()
     const addrNode = rootNode.derive("m/44'/60'/0'/0/0");
     const pubKey = util.privateToPublic(addrNode._privateKey);
     const addr = util.publicToAddress(pubKey).toString('hex');
     const address = util.toChecksumAddress(addr);
-    console.log("Address" + address)
+    console.log("Address " + address)
     return address
   }
