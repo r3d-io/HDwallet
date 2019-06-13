@@ -105,7 +105,7 @@ inquirer
   }
 
   async function generateAddress(){
-    rootNode = await getKey()
+    rootNode = await generateKey()
     path = await getAddress()
     const addrNode = rootNode.derive(path);
     const pubKey = util.privateToPublic(addrNode._privateKey);
