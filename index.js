@@ -3,7 +3,7 @@ const bip39 = require('bip39')
 const hdkey = require('hdkey')
 const util = require('ethereumjs-util');
 const ethTx = require('ethereumjs-tx').Transaction
-var inquirer = require('inquirer');
+const inquirer = require('inquirer');
 
 inquirer
   .prompt([
@@ -19,14 +19,14 @@ inquirer
       generateMnemonic()
     }
     else if(answers.options == "Generate key"){
-      getKey()
+      generateKey()
     }
     else if(answers.options == "Generate address"){
       generateAddress()
     }
   });
 
-  async function getKey(){
+  async function getMnemonic(){
     answers = await inquirer.prompt([
       {
         type: 'list',
@@ -45,13 +45,11 @@ inquirer
         },
       ])
       mnemonic = response.mnemonic
-      rootNode = await generateKey(mnemonic)
-      return rootNode
+      return mnemonic
     }
     else if(answers.options == "No"){
       mnemonic = generateMnemonic()
-      rootNode = await generateKey(mnemonic)
-      return rootNode
+      return mnemonic
     }
   }
 
@@ -98,7 +96,8 @@ inquirer
     return mnemonic
   }
 
-  function generateKey(mnemonic){
+  async function generateKey(mnemonic){
+    mnemonic = await getMnemonic()
     const seed =  bip39.mnemonicToSeedSync(mnemonic)
     const rootNode =  hdkey.fromMasterSeed(seed)
     console.log("Master private key" + rootNode._privateKey.toString('hex') + "\nMaster public key" + rootNode._publicKey.toString('hex') )
