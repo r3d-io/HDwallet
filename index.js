@@ -23,17 +23,33 @@ const params = {
   value: '0.1',
   gasPrice: 5000000000,
   gasLimit: 21000,
-  chainId: 3
+  chainId: 1,
 };
+// const chain = 99
+// const params = {
+//   nonce: '0x0',
+//   gasPrice: 0,
+//   gasLimit: 30000,
+//   to: '0xEA674fdDe714fd979de3EdF0F56AA9716B898ec8',
+//   value: '0x00',
+//   data: '0x',
+//   chainId: 3,
+//   r: 0,
+//   s: 0,
+//   v: chain
+//  }
 const tx = new ethTx(params);
 tx.sign(addrNode._privateKey);
 const serializedTx = tx.serialize()
 
 const web3 = new Web3("ws://localhost:8546");
-
 web3.eth.net.isListening()
-   .then(() => console.log('is connected'))
-   .catch(e => console.log('Wow. Something went wrong'));
+.then(() => console.log('is connected'))
+.catch(e => console.log('Wow. Something went wrong'));
+
+const rawTx = '0x' + serializedTx.toString('hex');
+// console.log(rawTx)
+// console.log(web3.eth.getTransactionCount(addr).toString('hex') + "***")
 
 web3.eth.sendSignedTransaction( `0x${serializedTx.toString('hex')}`, 
   (error, result) => { 
@@ -42,7 +58,7 @@ web3.eth.sendSignedTransaction( `0x${serializedTx.toString('hex')}`,
   } 
  );
 
-console.log(mnemonic + "\n" + seed.toString('hex') + "\n" + address )
+console.log(mnemonic + "\n" + seed.toString('hex') + "\n" + addr + "\n" + address )
 
 // const readline = require('readline').createInterface({
 //   input: process.stdin,
