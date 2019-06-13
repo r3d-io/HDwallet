@@ -9,10 +9,8 @@ mnemonic = "require pulse curve cage relief material voyage general act virus fa
 const seed = bip39.mnemonicToSeedSync(mnemonic)
 
 const root = hdkey.fromMasterSeed(seed);
-// const masterPrivateKey = root._privateKey.toString('hex');
-// const masterPublicKey = root._publicKey.toString('hex');
 
-const addrNode = root.derive("m/44'/60'/0'/0/0"); //line 1
+const addrNode = root.derive("m/44'/60'/0'/0/0");
 const pubKey = util.privateToPublic(addrNode._privateKey);
 const addr = util.publicToAddress(pubKey).toString('hex');
 const address = util.toChecksumAddress(addr);
@@ -25,12 +23,12 @@ const params = {
   gasLimit: 21000,
   chainId: 3
 };
+
 const tx = new ethTx(params);
 tx.sign(addrNode._privateKey);
 const serializedTx = tx.serialize()
 
 const web3 = new Web3("ws://localhost:8546");
-
 web3.eth.net.isListening()
    .then(() => console.log('is connected'))
    .catch(e => console.log('Wow. Something went wrong'));
@@ -43,15 +41,3 @@ web3.eth.sendSignedTransaction( `0x${serializedTx.toString('hex')}`,
  );
 
 console.log(mnemonic + "\n" + seed.toString('hex') + "\n" + address )
-
-// const readline = require('readline').createInterface({
-//   input: process.stdin,
-//   output: process.stdout
-// })
-// readline.question('Enter seed length 12 15 18 21 24', (seedlength) => {
-  
-//   readline.close()
-// })
-
-// https://iancoleman.io/bip39/
-// geth --testnet --ws --wsorigins="*"
