@@ -112,14 +112,15 @@ function generateMnemonic() {
 async function generateKey(coinType) {
 	mnemonic = await getMnemonic()
 	const seed = bip39.mnemonicToSeedSync(mnemonic)
+	rootNode = hdkey.fromMasterSeed(seed)
+	console.log("Extended private key " + rootNode.privateExtendedKey + "\nExtended public key " + rootNode.publicExtendedKey)
 	if (coinType == 'eth') {
-		rootNode = hdkey.fromMasterSeed(seed)
+		var rootNode = hdkey.derive("m/44'/0'")
 		console.log("Master private key " + rootNode._privateKey.toString('hex') + "\nMaster public key " + rootNode._publicKey.toString('hex'))
 	}
 	else if (coinType == 'btc') {
-		var hdkey1 = hdkey.fromMasterSeed(Buffer.from(seed, 'hex'))
-		var rootNode = hdkey1.derive("m/44'/0'")
-		console.log("Master private key " + rootNode.privateExtendedKey + "\nMaster public key " + rootNode.publicExtendedKey)
+		var rootNode = hdkey.derive("m/44'/0'")
+		console.log("Master private key " + rootNode._privateKey.toString('hex') + "\nMaster public key " + rootNode._publicKey.toString('hex'))
 	}
 	return rootNode
 }
