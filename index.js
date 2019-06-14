@@ -1,110 +1,107 @@
-const Web3 = require('web3');
+const Web3 = require('web3')
 const bip39 = require('bip39')
+const bip32 = require('bip32')
 const hdkey = require('hdkey')
-const inquirer = require('inquirer')
-const sha256 = require('js-sha256');
-const ripemd160 = require('ripemd160');
-const bitcoin = require("bitcoinjs-lib")
 const util = require('ethereumjs-util')
 const ethTx = require('ethereumjs-tx').Transaction
+const inquirer = require('inquirer')
+const bitcoin = require("bitcoinjs-lib")
+const ec = require("elliptic").ec
+const ecdsa = new ec('secp256k1')
+const sha256 = require('js-sha256');
+const ripemd160 = require('ripemd160');
 
-inquirer
-  .prompt([
-    {
-      type: 'list',
-      name: 'options',
-      message: 'Which operation do you want to perform?',
-      choices: ['Generate mnemonic', 'Generate key', 'Generate address'],
-    },
-  ])
-  .then(answers => {
-    if(answers.options == "Generate mnemonic"){
-      generateMnemonic()
-    }
-    else if(answers.options == "Generate key"){
-      generateKey()
-    }
-    else if(answers.options == "Generate address"){
-      generateAddress()
-    }
-  });
+async function executemain() {
+	answers = await inquirer.prompt([
+		{
+			type: 'list',
+			name: 'options',
+			message: 'Which operation do you want to perform?',
+			choices: ['Generate mnemonic', 'Generate key', 'Generate address'],
+		},
+	])
 
-  async function getMnemonic(){
-    answers = await inquirer.prompt([
-      {
-        type: 'list',
-        name: 'options',
-        message: 'Do you have a mnemonic or not?',
-        choices: ['Yes', 'No'],
-      },
-    ])
+	if (answers.options == "Generate mnemonic") {
+		generateMnemonic()
+	}
+	else if (answers.options == "Generate key") {
+		coinType = await getCoinType()
+		generateKey(coinType)
+	}
+	else if (answers.options == "Generate address") {
+		coinType = await getCoinType()
+		if (coinType == 'eth')
+			generateAddressEther(coinType)
+		else if(coinType == 'btc')
+			generateAddressBitcoin(coinType)
+	}
+}
 
-    if(answers.options == "Yes"){
-      response = await inquirer.prompt([
-        {
-          name: 'mnemonic',
-          message: 'Enter your mnemonic',
-          default: 'require pulse curve cage relief material voyage general act virus fabric wheat',
-        },
-      ])
-      mnemonic = response.mnemonic
-      return mnemonic
-    }
-    else if(answers.options == "No"){
-      mnemonic = generateMnemonic()
-      return mnemonic
-    }
-  }
+async function getCoinType() {
+	coinType = await inquirer.prompt([
+		{
+			type: 'list',
+			name: 'currencyType',
+			message: 'Which currency you want to use etherum or bitcoin',
+			choices: ['eth', 'btc'],
+		},
+	])
+	return coinType.currencyType
+}
 
-  async function getAddress(){
-    answers = await inquirer.prompt([
-      {
-        type: 'list',
-        name: 'currencyType',
-        message: 'Which currency you want to use etherum or bitcoin',
-        choices: ['eth', 'btc'],
-      },
-      {
-        type: 'list',
-        name: 'changeType',
-        message: 'Please specify if it is an internal or external address?',
-        choices: ['Internal', 'External'],
-      },
-      {
-        name: 'addressNum',
-        message: 'Enter the number for which you want to generate address ?',
-        default: '0'
-      },
-    ])
-		path = "m/44'/" + "60'/0'/0/0"
+async function getMnemonic() {
+	answers = await inquirer.prompt([
+		{
+			type: 'list',
+			name: 'options',
+			message: 'Do you have a mnemonic or not?',
+			choices: ['Yes', 'No'],
+		},
+	])
 
-    if (answers.currencyType == "btc")
-      path = path + "0'/"
-    else if(answers.currencyType == "eth")
-			path = path + "60'/"
+	if (answers.options == "Yes") {
+		response = await inquirer.prompt([
+			{
+				name: 'mnemonic',
+				message: 'Enter your mnemonic',
+				default: 'require pulse curve cage relief material voyage general act virus fabric wheat',
+			},
+		])
+		mnemonic = response.mnemonic
+		return mnemonic
+	}
+	else if (answers.options == "No") {
+		mnemonic = generateMnemonic()
+		return mnemonic
+	}
+}
 
-    if (answers.changeType == "Internal")
-      path = path + "0'/"
-    else if(answers.changeType == "External")
-			path = path + "1'/"
-
-    path = path + answers.addressNum
-    return path
-  }
-
-  function generateMnemonic(){
-    let mnemonic = bip39.generateMnemonic()
-    console.log(mnemonic)
-    return mnemonic
-  }
-
-  async function generateKey(mnemonic){
-    mnemonic = await getMnemonic()
-    const seed =  bip39.mnemonicToSeedSync(mnemonic)
-    const rootNode =  hdkey.fromMasterSeed(seed)
-    console.log("Master private key" + rootNode._privateKey.toString('hex') + "\nMaster public key" + rootNode._publicKey.toString('hex') )
-    return rootNode
-  }
+async function getAddress(coinType) {
+	answers = await inquirer.prompt([
+		{
+			type: 'list',
+			name: 'changeType',
+			message: 'Please specify if it is an internal or external address?',
+			choices: ['Internal', 'External'],
+		},
+		{
+			name: 'addressNum',
+			message: 'Enter the number for which you want to generate address ?',
+			default: '0'
+		},
+	])
+	path = "m/44'/"
+	if (coinType == "btc")
+		path = path + "0'/"
+	else if (coinType == "eth")
+		path = path + "60'/"
+	if (answers.changeType == "Internal")
+		path = path + "0'/"
+	else if (answers.changeType == "External")
+		path = path + "1'/"
+	path = path + answers.addressNum
+	return path
+}
 
 function generateMnemonic() {
 	let mnemonic = bip39.generateMnemonic()
@@ -115,16 +112,15 @@ function generateMnemonic() {
 async function generateKey(coinType) {
 	mnemonic = await getMnemonic()
 	const seed = bip39.mnemonicToSeedSync(mnemonic)
-	rootNode = hdkey.fromMasterSeed(seed)
 	if (coinType == 'eth') {
-		addrNode = rootNode.derive("m/44'/60'/0'/0/0");
+		rootNode = hdkey.fromMasterSeed(seed)
 		console.log("Master private key " + rootNode._privateKey.toString('hex') + "\nMaster public key " + rootNode._publicKey.toString('hex'))
 	}
 	else if (coinType == 'btc') {
-		addrNode = rootNode.derive("m/44'/0'/0'/0/0");
+		var hdkey1 = hdkey.fromMasterSeed(Buffer.from(seed, 'hex'))
+		var rootNode = hdkey1.derive("m/44'/0'")
 		console.log("Master private key " + rootNode.privateExtendedKey + "\nMaster public key " + rootNode.publicExtendedKey)
 	}
-	console.log(rootNode)
 	return rootNode
 }
 
