@@ -6,6 +6,10 @@ const util = require('ethereumjs-util')
 const ethTx = require('ethereumjs-tx').Transaction
 const inquirer = require('inquirer')
 const bitcoin = require("bitcoinjs-lib")
+const ec = require("elliptic").ec
+const ecdsa = new ec('secp256k1')
+const sha256 = require('js-sha256');
+const ripemd160 = require('ripemd160');
 
 async function executemain() {
 	answers = await inquirer.prompt([
@@ -26,7 +30,10 @@ async function executemain() {
 	}
 	else if (answers.options == "Generate address") {
 		coinType = await getCoinType()
-		generateAddress(coinType)
+		if (coinType == 'eth')
+			generateAddressEther(coinType)
+		else if(coinType == 'btc')
+			generateAddressBitcoin(coinType)
 	}
 }
 
@@ -84,18 +91,14 @@ async function getAddress(coinType) {
 		},
 	])
 	path = "m/44'/"
-	if (coinType == "btc") {
+	if (coinType == "btc")
 		path = path + "0'/"
-	}
-	else if (coinType == "eth") {
+	else if (coinType == "eth")
 		path = path + "60'/"
-	}
-	if (answers.changeType == "Internal") {
+	if (answers.changeType == "Internal")
 		path = path + "0'/"
-	}
-	else if (answers.changeType == "External") {
+	else if (answers.changeType == "External")
 		path = path + "1'/"
-	}
 	path = path + answers.addressNum
 	return path
 }
@@ -112,38 +115,46 @@ async function generateKey(coinType) {
 	if (coinType == 'eth') {
 		rootNode = hdkey.fromMasterSeed(seed)
 		console.log("Master private key " + rootNode._privateKey.toString('hex') + "\nMaster public key " + rootNode._publicKey.toString('hex'))
-		privateKey = rootNode._privateKey
-		return rootNode
 	}
 	else if (coinType == 'btc') {
-		rootNode = bip32.fromSeed(seed);
-		console.log("Master private key " + rootNode.toBase58())
-		privateKey = rootNode.toBase58()
-		return privateKey
+		var hdkey1 = hdkey.fromMasterSeed(Buffer.from(seed, 'hex'))
+		var rootNode = hdkey1.derive("m/44'/0'")
+		console.log("Master private key " + rootNode.privateExtendedKey + "\nMaster public key " + rootNode.publicExtendedKey)
+		// rootNode = bip32.fromSeed(seed);
+		// privateKey = rootNode.toBase58()
+		// const keys = ecdsa.keyFromPrivate(privateKey);  
+		// const publicKey = keys.getPublic('hex');
+		// let hash = sha256(Buffer.from(publicKey, 'hex'));
+		// let publicKeyHash = new ripemd160().update(Buffer.from(hash, 'hex')).digest();
+		// console.log("Master private key " + privateKey + "\nMaster public key " + publicKeyHash.toString('hex'))
+		// return privateKey
 	}
+	return rootNode
 }
 
-async function generateAddress(coinType) {
-	if (coinType == 'eth') {
-		rootNode = await generateKey(coinType)
-		path = await getAddress(coinType)
-		const addrNode = rootNode.derive(path);
-		const pubKey = util.privateToPublic(addrNode._privateKey);
-		const addr = util.publicToAddress(pubKey).toString('hex');
-		const address = util.toChecksumAddress(addr);
-		console.log("Address " + address)
-		return address
-	}
-	else if (coinType == 'btc') {
-		privateKey = await generateKey(coinType)
-		const step1 = Buffer.from("00" + privateKey, 'hex');
-		const step2 = sha256(step1);
-		const step3 = sha256(Buffer.from(step2, 'hex'));
-		const checksum = step3.substring(0, 8);
-		const step4 = step1.toString('hex') + checksum;
-		const address = base58.encode(Buffer.from(step4, 'hex'));
-		return address
-	}
+async function generateAddressEther(coinType) {
+	rootNode = await generateKey(coinType)
+	path = await getAddress(coinType)
+	const addrNode = rootNode.derive(path);
+	const pubKey = util.privateToPublic(addrNode._privateKey);
+	const addr = util.publicToAddress(pubKey).toString('hex');
+	const address = util.toChecksumAddress(addr);
+	console.log("Address " + address)
+	return address
 }
 
+async function generateAddressBitcoin(coinType) {
+	var hdkey1 = hdkey.fromMasterSeed(Buffer.from(seed, 'hex'))
+	var childkey = hdkey1.derive("m/44'/0'")
+	console.log(childkey.privateExtendedKey)
+	console.log(childkey.publicExtendedKey)
+	// privateKey = await generateKey(coinType)
+	// const step1 = Buffer.from("00" + privateKey, 'hex');
+	// const step2 = sha256(step1);
+	// const step3 = sha256(Buffer.from(step2, 'hex'));
+	// const checksum = step3.substring(0, 8);
+	// const step4 = step1.toString('hex') + checksum;
+	// const address = base58.encode(Buffer.from(step4, 'hex'));
+	// return address
+}
 executemain()
