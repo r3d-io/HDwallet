@@ -136,17 +136,13 @@ async function generateAddressEther(coinType) {
 }
 
 async function generateAddressBitcoin(coinType) {
-	var hdkey1 = hdkey.fromMasterSeed(Buffer.from(seed, 'hex'))
-	var childkey = hdkey1.derive("m/44'/0'")
-	console.log(childkey.privateExtendedKey)
-	console.log(childkey.publicExtendedKey)
-	// privateKey = await generateKey(coinType)
-	// const step1 = Buffer.from("00" + privateKey, 'hex');
-	// const step2 = sha256(step1);
-	// const step3 = sha256(Buffer.from(step2, 'hex'));
-	// const checksum = step3.substring(0, 8);
-	// const step4 = step1.toString('hex') + checksum;
-	// const address = base58.encode(Buffer.from(step4, 'hex'));
-	// return address
+	rootNode = await generateKey(coinType)
+	const step1 = Buffer.from("00" + rootNode.privateExtendedKey, 'hex');
+	const step2 = sha256(step1);
+	const step3 = sha256(Buffer.from(step2, 'hex'));
+	const checksum = step3.substring(0, 8);
+	const step4 = step1.toString('hex') + checksum;
+	const address = base58.encode(Buffer.from(step4, 'hex'));
+	return address
 }
 executemain()
