@@ -120,14 +120,6 @@ async function generateKey(coinType) {
 		var hdkey1 = hdkey.fromMasterSeed(Buffer.from(seed, 'hex'))
 		var rootNode = hdkey1.derive("m/44'/0'")
 		console.log("Master private key " + rootNode.privateExtendedKey + "\nMaster public key " + rootNode.publicExtendedKey)
-		// rootNode = bip32.fromSeed(seed);
-		// privateKey = rootNode.toBase58()
-		// const keys = ecdsa.keyFromPrivate(privateKey);  
-		// const publicKey = keys.getPublic('hex');
-		// let hash = sha256(Buffer.from(publicKey, 'hex'));
-		// let publicKeyHash = new ripemd160().update(Buffer.from(hash, 'hex')).digest();
-		// console.log("Master private key " + privateKey + "\nMaster public key " + publicKeyHash.toString('hex'))
-		// return privateKey
 	}
 	return rootNode
 }
