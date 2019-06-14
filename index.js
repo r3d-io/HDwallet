@@ -76,19 +76,18 @@ inquirer
         default: '0'
       },
     ])
-    path = "m/44'/" + "60'/0'/0/0"
-    if (answers.currencyType == "btc"){
+		path = "m/44'/" + "60'/0'/0/0"
+
+    if (answers.currencyType == "btc")
       path = path + "0'/"
-    }
-    else if(answers.currencyType == "eth"){
-      path = path + "60'/"
-    }
-    if (answers.changeType == "Internal"){
+    else if(answers.currencyType == "eth")
+			path = path + "60'/"
+
+    if (answers.changeType == "Internal")
       path = path + "0'/"
-    }
-    else if(answers.changeType == "External"){
-      path = path + "1'/"
-    }
+    else if(answers.changeType == "External")
+			path = path + "1'/"
+
     path = path + answers.addressNum
     return path
   }
