@@ -2,9 +2,9 @@ const inquirer = require('inquirer')
 const bip39 = require('bip39')
 const hdkey = require('hdkey')
 const util = require('ethereumjs-util')
-const sha256 = require('js-sha256');
-const ripemd160 = require('ripemd160')
-const base58 = require('bs58check')
+const createHash = require ('create-hash')
+const bs58check = require('bs58check')
+const wif = require('wif')
 // const Web3 = require('web3')
 // const bitcoin = require("bitcoinjs-lib")
 // const ethTx = require('ethereumjs-tx').Transaction
@@ -123,7 +123,8 @@ async function generateKey(coinType) {
 	}
 	else if (coinType == 'btc') {
     addrNode = rootNode.derive("m/44'/0'/0'/0/0");
-    console.log("Master private key " + addrNode._privateKey.toString('hex') + "\nMaster public key " + addrNode._publicKey.toString('hex'))
+    privateKey = wif.encode(128, addrNode._privateKey, true)
+    console.log("Master private key " + privateKey + "\nMaster public key " + addrNode._publicKey.toString('hex'))
 	}
 	return rootNode
 }
@@ -143,15 +144,20 @@ async function generateAddressBitcoin(coinType) {
   rootNode = await generateKey(coinType)
 	path = await getAddress(coinType)
 	addrNode = rootNode.derive(path);
-  let hash = sha256(Buffer.from(addrNode._publicKey, 'hex'));
-  let publicKeyHash = ripemd160().update(Buffer.from(hash, 'hex')).digest();
-  step1 = Buffer.from("00" + publicKeyHash, 'hex');
-  step2 = sha256(step1);
-  step3 = sha256(Buffer.from(step2, 'hex'));
-  checksum = step3.substring(0, 8);
-  step4 = step1.toString('hex') + checksum;
-  address = base58.encode(Buffer.from(step4, 'hex'));
-	console.log("\nAddress " + address)
+  step1 = addrNode._publicKey;
+  step2 = createHash('sha256').update(step1).digest();
+  step3 = createHash('rmd160').update(step2).digest();
+  step5 = createHash('sha256').update(step3).digest();
+  step6 = createHash('sha256').update(step5).digest();
+  step7 = step6.slice(0,4)
+  step8 = Buffer.concat([step3, step7]);
+  // step4 = Buffer.allocUnsafe(21);
+  // console.log(step4.toString('hex')  + "\n" +step6.toString('hex') + "\n" +step7.toString('hex'))
+  // step4.writeUInt8(0x6f, 0);
+  // step3.copy(step4, 1);
+  // step9 = bs58check.encode(step4);
+  address = bs58check.encode(step8);  
+  console.log("\nAddress " + address)
   return address
 }
 
