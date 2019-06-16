@@ -1,15 +1,14 @@
-const Web3 = require('web3')
+const inquirer = require('inquirer')
 const bip39 = require('bip39')
 const bip32 = require('bip32')
 const hdkey = require('hdkey')
 const util = require('ethereumjs-util')
-const ethTx = require('ethereumjs-tx').Transaction
-const inquirer = require('inquirer')
-const bitcoin = require("bitcoinjs-lib")
-const ec = require("elliptic").ec
-const ecdsa = new ec('secp256k1')
-const sha256 = require('js-sha256');
-const ripemd160 = require('ripemd160');
+const createHash = require ('create-hash')
+const bs58check = require('bs58check')
+const wif = require('wif')
+// const Web3 = require('web3')
+// const bitcoin = require("bitcoinjs-lib")
+// const ethTx = require('ethereumjs-tx').Transaction
 
 async function executemain() {
 	answers = await inquirer.prompt([
@@ -17,7 +16,7 @@ async function executemain() {
 			type: 'list',
 			name: 'options',
 			message: 'Which operation do you want to perform?',
-			choices: ['Generate mnemonic', 'Generate key', 'Generate address'],
+			choices: ['Generate mnemonic', 'Generate key', 'Generate address','Exit'],
 		},
 	])
 
@@ -33,8 +32,11 @@ async function executemain() {
 		if (coinType == 'eth')
 			generateAddressEther(coinType)
 		else if(coinType == 'btc')
-			generateAddressBitcoin(coinType)
-	}
+      generateAddressBitcoin(coinType)
+  }
+  else{
+    process.exit()
+  }
 }
 
 async function getCoinType() {
@@ -42,7 +44,7 @@ async function getCoinType() {
 		{
 			type: 'list',
 			name: 'currencyType',
-			message: 'Which currency you want to use etherum or bitcoin',
+			message: 'Which currency you want to use Ethereum or Bitcoin',
 			choices: ['eth', 'btc'],
 		},
 	])
@@ -67,8 +69,7 @@ async function getMnemonic() {
 				default: 'require pulse curve cage relief material voyage general act virus fabric wheat',
 			},
 		])
-		mnemonic = response.mnemonic
-		return mnemonic
+		return response.mnemonic
 	}
 	else if (answers.options == "No") {
 		mnemonic = generateMnemonic()
@@ -92,34 +93,37 @@ async function getAddress(coinType) {
 	])
 	path = "m/44'/"
 	if (coinType == "btc")
-		path = path + "0'/"
+		path = path + "0'/0'"
 	else if (coinType == "eth")
-		path = path + "60'/"
+		path = path + "60'/0'"
 	if (answers.changeType == "Internal")
-		path = path + "0'/"
+		path = path + "0/"
 	else if (answers.changeType == "External")
-		path = path + "1'/"
+		path = path + "1/"
 	path = path + answers.addressNum
 	return path
 }
 
 function generateMnemonic() {
-	let mnemonic = bip39.generateMnemonic()
-	console.log(mnemonic)
+  let mnemonic = bip39.generateMnemonic()
+	const seed = bip39.mnemonicToSeedSync(mnemonic)  
+	console.log("\nMnemonic " + mnemonic + "\nSeed " + seed.toString('hex'))
 	return mnemonic
 }
 
 async function generateKey(coinType) {
 	mnemonic = await getMnemonic()
 	const seed = bip39.mnemonicToSeedSync(mnemonic)
-	if (coinType == 'eth') {
-		rootNode = hdkey.fromMasterSeed(seed)
-		console.log("Master private key " + rootNode._privateKey.toString('hex') + "\nMaster public key " + rootNode._publicKey.toString('hex'))
+	rootNode = hdkey.fromMasterSeed(seed)
+	console.log("Extended private key " + rootNode.privateExtendedKey + "\nExtended public key " + rootNode.publicExtendedKey)
+	if (coinType == 'eth') {		
+		addrNode = rootNode.derive("m/44'/60'");
+		console.log("Master private key " + addrNode._privateKey.toString('hex') + "\nMaster public key " + addrNode._publicKey.toString('hex'))
 	}
 	else if (coinType == 'btc') {
-		var hdkey1 = hdkey.fromMasterSeed(Buffer.from(seed, 'hex'))
-		var rootNode = hdkey1.derive("m/44'/0'")
-		console.log("Master private key " + rootNode.privateExtendedKey + "\nMaster public key " + rootNode.publicExtendedKey)
+    addrNode = rootNode.derive("m/44'/0'");
+    privateKey = wif.encode(128, addrNode._privateKey, true)
+    console.log("Master private key " + privateKey + "\nMaster public key " + addrNode._publicKey.toString('hex'))
 	}
 	return rootNode
 }
@@ -131,18 +135,24 @@ async function generateAddressEther(coinType) {
 	const pubKey = util.privateToPublic(addrNode._privateKey);
 	const addr = util.publicToAddress(pubKey).toString('hex');
 	const address = util.toChecksumAddress(addr);
-	console.log("Address " + address)
+	console.log("\nAddress " + address)
 	return address
 }
 
 async function generateAddressBitcoin(coinType) {
-	rootNode = await generateKey(coinType)
-	const step1 = Buffer.from("00" + rootNode.privateExtendedKey, 'hex');
-	const step2 = sha256(step1);
-	const step3 = sha256(Buffer.from(step2, 'hex'));
-	const checksum = step3.substring(0, 8);
-	const step4 = step1.toString('hex') + checksum;
-	const address = base58.encode(Buffer.from(step4, 'hex'));
-	return address
+  rootNode = await generateKey(coinType)
+	path = await getAddress(coinType)
+	addrNode = rootNode.derive(path);
+  step1 = addrNode._publicKey;
+  step2 = createHash('sha256').update(step1).digest();
+  step3 = createHash('rmd160').update(step2).digest();
+  step5 = createHash('sha256').update(step3).digest();
+  step6 = createHash('sha256').update(step5).digest();
+  step7 = step6.slice(0,4)
+  step8 = Buffer.concat([step3, step7]);
+  address = bs58check.encode(step8);  
+  console.log("\nAddress " + address)
+  return address
 }
+
 executemain()
