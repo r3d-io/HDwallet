@@ -39,7 +39,7 @@ async function executemain() {
 		if (coinType == 'eth')
 			generateAddressEther(coinType)
 		else if (coinType == 'btc')
-			generateAddressBitcoin(coinType)
+      generateTestnetAddressBitcoin(coinType)
 	}
 	else {
 		process.exit()
@@ -175,19 +175,20 @@ async function generateTestnetAddressBitcoin(coinType) {
 	path = await getAddress(coinType)
 	addrNode = rootNode.derive(path);
 	privateKey = wif.encode(128, addrNode._privateKey, true)
-	keyPair = bitcoin.ECPair.fromWIF(privateKey)
+  keyPair = bitcoin.ECPair.fromWIF(privateKey)
+  keyPair.network = TestNet;
   const { address } = bitcoin.payments.p2pkh({ pubkey: keyPair.publicKey, network: TestNet })
   privateKey = keyPair.toWIF()
   console.log(`Public: ${address} \n Private: ${privateKey}`)
-  // console.log(subutil.inspect(address, {showHidden: false, depth: null}))
+  // console.log(subutil.inspect(keyPair, {showHidden: false, depth: null}))
 }
 
 async function btcTransaction(){
-	const TestNet = bitcoin.networks.testnet;
-  var key = bitcoin.ECKey.fromWIF("KwifDwSF7Hxdfr5SF1BBASaRAs3F5omKRYPAQ6hWVC5UUb1i6rmm");
-  var tx = new bitcoin.TransactionBuilder();
-  tx.addInput("405dc36b7a8d841b102a46360781b58c1db7764d380558f61d3f2cd38c146d98", 1);
-  tx.addOutput("mw6UqYnazuLESfUMhruAKt6DmQ3SWW475H", 90000);
+	const TestNet = bitcoin.networks.testnet
+  var key = bitcoin.ECPair.fromWIF("cN5egrS6YMetqHYhdQzJXm5Uo6LekFs1VaXdWXA1zJjUjL3eJybC",TestNet);
+  var tx = new bitcoin.TransactionBuilder(TestNet);
+  tx.addInput("405dc36b7a8d841b102a46360781b58c1db7764d380558f61d3f2cd38c146d98", 0);
+  tx.addOutput("mw6UqYnazuLESfUMhruAKt6DmQ3SWW475H", 50000);
   tx.sign(0, key);
   console.log(tx.build().toHex());
 } 
