@@ -28,8 +28,8 @@ async function executemain() {
 		generateKey(coinType)
 	}
 	else if (answers.options == "BTC transaction") {
-    generateTestnetAddressBitcoin('btc')
-		// btcTransaction('btc')
+    // generateTestnetAddressBitcoin('btc')
+		btcTransaction('btc')
 	}
 	else if (answers.options == "ETH transaction") {
 		ethTransaction('eth')
@@ -182,31 +182,23 @@ async function generateTestnetAddressBitcoin(coinType) {
   // console.log(subutil.inspect(address, {showHidden: false, depth: null}))
 }
 
-async function btcTransaction(coinType){
-	rootNode = await generateKey(coinType)
-	path = await getAddress(coinType)
-	addrNode = rootNode.derive(path);
-	privateKey = wif.encode(128, addrNode._privateKey, true)
-	keyPair = bitcoin.ECPair.fromWIF(privateKey)
-	
-	const { address } = bitcoin.payments.p2pkh({ pubkey: keyPair.publicKey })
+async function btcTransaction(){
 	const TestNet = Btc.networks.testnet;
-	const apiUrl = 'https://testnet.blockexplorer.com/api/addr/';
 
-	let privateKey = "L5gA4mJgtWTPqFSyomYUdj2mtDYSYkVPm1a7nMUdfzJwPuRs1yuA";
+	let privateKey = "KwifDwSF7Hxdfr5SF1BBASaRAs3F5omKRYPAQ6hWVC5UUb1i6rmm";
 	let wallet = new Btc.ECPair.fromWIF(privateKey, TestNet);
 	let publicKey = wallet.getAddress();
 	console.log("my public key:", publicKey);
 
 	let tx = new Btc.TransactionBuilder(TestNet);
 
-	let amountWeHave = 100000000; // 1.0 BTC
-	let amountToKeep = 90000000; // 0.9 BTC
+	let amountWeHave = 100000; // 1.0 BTC
+	let amountToKeep = 90000; // 0.9 BTC
 	let transactionFee = 1000; // 0.0001 BTC
 	let amountToSend = amountWeHave - amountToKeep - transactionFee; // ~0.1 (0.0999)
 
-	// tx.addInput(<one of my input transactions></one>, 0)
-	tx.addOutput("1JccphKGSQHcTJ1MGUkDyZ7Wb5aTD3cp2q", amountToSend);
+	tx.addInput("405dc36b7a8d841b102a46360781b58c1db7764d380558f61d3f2cd38c146d98", 1)
+	tx.addOutput("mw6UqYnazuLESfUMhruAKt6DmQ3SWW475H", amountToSend);
 	tx.addOutput(publicKey, amountToKeep);
 	tx.sign(0, wallet);
 
