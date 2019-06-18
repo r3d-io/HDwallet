@@ -6,6 +6,7 @@ const subutil = require('util')
 const wif = require('wif')
 const bitcoin = require("bitcoinjs-lib")
 const explorers = require('bitcore-explorers');
+const bitcore = require('bitcore-lib');
 // const Web3 = require('web3')
 // const ethTx = require('ethereumjs-tx').Transaction
 
@@ -213,12 +214,12 @@ async function btcTransaction() {
   ])
 
   privateKey = answers.myKey
-  myAddress = answers.myAddress
-  addressTo = answers.recieverAddress
+  fromAddress = answers.myAddress
+  toAddress = answers.recieverAddress
   amount = Number(answers.amount);
   fee = 5000;
   const TestNet = bitcoin.networks.testnet
-  var insight = new explorers.Insight();
+  const insight = new explorers.Insight();
 
   if (answers.operationType == "Raw transaction") {
     var key = bitcoin.ECPair.fromWIF(privateKey, TestNet);
@@ -229,25 +230,50 @@ async function btcTransaction() {
     console.log(tx.build().toHex());
   }
   else if (answers.operationType == "Broadcast") {
-    insight.getUtxos(myAddress, (err, utxos) => {
-      if (err) {
-        return err;
-      } else {
-        let tx = bitcore.Transaction(TestNet);
-        tx.from(utxos);
-        tx.to(addressTo, amount);
-        tx.change(myAddress);
-        tx.fee(fee);
-        tx.sign(privateKey);
-        tx.serialize();
+    const unit = bitcore.Unit;
+    const minerFee = unit.fromMilis(0.128).toSatoshis();
+    const transactionAmount = unit.fromMilis(amount).toSatoshis();
 
-        insight.broadcast(tx.toString(), (error, txid) => {
-          if (error) {
-            return error;
-          } else {
-            console.log(txid)
+    insight.getUnspentUtxos(fromAddress, function (error, utxos) {
+      let balance = unit.fromSatoshis(0).toSatoshis();
+      for (var i = 0; i < utxos.length; i++) {
+        balance += unit.fromSatoshis(parseInt(utxos[i]['satoshis'])).toSatoshis();
+      }
+      console.log(balance)
+
+      if ((balance - transactionAmount - minerFee) > 0) {
+        try {
+          let bitcore_transaction = new bitcore.Transaction()
+            .from(utxos)
+            .to(toAddress, amount)
+            .fee(fee)
+            .change(toAddress)
+            .sign(privateKey);
+
+          if (bitcore_transaction.getSerializationError()) {
+            let error = bitcore_transaction.getSerializationError().message;
+            switch (error) {
+              case 'Some inputs have not been fully signed':
+                return reject('Please check your private key');
+                break;
+              default:
+                return reject(error);
+            }
           }
-        })
+
+          insight.broadcast(bitcore_transaction, function (error, body) {
+            if (error) {
+              reject('Error in broadcast: ' + error);
+            } else {
+              resolve({
+                transactionId: body
+              });
+            }
+          });
+
+        } catch (error) {
+          return reject(error.message);
+        }
       }
     });
   }
