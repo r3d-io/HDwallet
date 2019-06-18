@@ -4,6 +4,7 @@ const hdkey = require('hdkey')
 const util = require('ethereumjs-util')
 const createHash = require('create-hash')
 const bs58check = require('bs58check')
+const subutil = require('util')
 const wif = require('wif')
 // const Web3 = require('web3')
 const bitcoin = require("bitcoinjs-lib")
@@ -27,7 +28,8 @@ async function executemain() {
 		generateKey(coinType)
 	}
 	else if (answers.options == "BTC transaction") {
-		btcTransaction('btc')
+    generateTestnetAddressBitcoin('btc')
+		// btcTransaction('btc')
 	}
 	else if (answers.options == "ETH transaction") {
 		ethTransaction('eth')
@@ -163,15 +165,21 @@ async function generateAddressBitcoin(coinType) {
 	let { address } = bitcoin.payments.p2pkh({ pubkey: keyPair.publicKey })
 	publicKey = addrNode._publicKey.toString('hex')
 	console.log("Path " + path + "\nAddress: " + address.toString('hex') + "\nprivate key " + privateKey + "\npublic key " + publicKey)
-	// step1 = addrNode._publicKey;
-	// step2 = createHash('sha256').update(step1).digest();
-	// step3 = createHash('rmd160').update(step2).digest();
-	// step5 = createHash('sha256').update(step3).digest();
-	// step6 = createHash('sha256').update(step5).digest();
-	// step7 = step6.slice(0, 4)
-	// step8 = Buffer.concat([step3, step7]);
-	// address = bs58check.encode(step8);
 	return address
+}
+
+async function generateTestnetAddressBitcoin(coinType) {
+  const TestNet = bitcoin.networks.testnet
+  // let keyPair = bitcoin.ECPair.makeRandom({ network: TestNet })
+  rootNode = await generateKey(coinType)
+	path = await getAddress(coinType)
+	addrNode = rootNode.derive(path);
+	privateKey = wif.encode(128, addrNode._privateKey, true)
+	keyPair = bitcoin.ECPair.fromWIF(privateKey)
+  const { address } = bitcoin.payments.p2pkh({ pubkey: keyPair.publicKey, network: TestNet })
+  privateKey = keyPair.toWIF()
+  console.log(`Public: ${address} \n Private: ${privateKey}`)
+  // console.log(subutil.inspect(address, {showHidden: false, depth: null}))
 }
 
 async function btcTransaction(coinType){
@@ -180,7 +188,28 @@ async function btcTransaction(coinType){
 	addrNode = rootNode.derive(path);
 	privateKey = wif.encode(128, addrNode._privateKey, true)
 	keyPair = bitcoin.ECPair.fromWIF(privateKey)
+	
 	const { address } = bitcoin.payments.p2pkh({ pubkey: keyPair.publicKey })
-	console.log("Address: " + address.toString('hex'))
+	const TestNet = Btc.networks.testnet;
+	const apiUrl = 'https://testnet.blockexplorer.com/api/addr/';
+
+	let privateKey = "L5gA4mJgtWTPqFSyomYUdj2mtDYSYkVPm1a7nMUdfzJwPuRs1yuA";
+	let wallet = new Btc.ECPair.fromWIF(privateKey, TestNet);
+	let publicKey = wallet.getAddress();
+	console.log("my public key:", publicKey);
+
+	let tx = new Btc.TransactionBuilder(TestNet);
+
+	let amountWeHave = 100000000; // 1.0 BTC
+	let amountToKeep = 90000000; // 0.9 BTC
+	let transactionFee = 1000; // 0.0001 BTC
+	let amountToSend = amountWeHave - amountToKeep - transactionFee; // ~0.1 (0.0999)
+
+	// tx.addInput(<one of my input transactions></one>, 0)
+	tx.addOutput("1JccphKGSQHcTJ1MGUkDyZ7Wb5aTD3cp2q", amountToSend);
+	tx.addOutput(publicKey, amountToKeep);
+	tx.sign(0, wallet);
+
+	console.log(tx.build().toHex());
 } 
 executemain()
