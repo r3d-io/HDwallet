@@ -184,24 +184,11 @@ async function generateTestnetAddressBitcoin(coinType) {
 
 async function btcTransaction(){
 	const TestNet = bitcoin.networks.testnet;
-
-	let privateKey = "KwifDwSF7Hxdfr5SF1BBASaRAs3F5omKRYPAQ6hWVC5UUb1i6rmm";
-	let wallet = bitcoin.ECPair.fromWIF(privateKey);
-  const { address } = bitcoin.payments.p2pkh({ pubkey: wallet.publicKey, network: TestNet })
-	console.log("my public key:", address);
-
-	let tx = new bitcoin.TransactionBuilder(TestNet);
-
-	let amountWeHave = 100000; // 1.0 BTC
-	let amountToKeep = 90000; // 0.9 BTC
-	let transactionFee = 1000; // 0.0001 BTC
-	let amountToSend = amountWeHave - amountToKeep - transactionFee; // ~0.1 (0.0999)
-
-	tx.addInput("405dc36b7a8d841b102a46360781b58c1db7764d380558f61d3f2cd38c146d98", 1)
-	tx.addOutput("mw6UqYnazuLESfUMhruAKt6DmQ3SWW475H", amountToSend);
-	tx.addOutput(address, amountToKeep);
-	tx.sign(0, wallet);
-
-	console.log(tx.build().toHex());
+  var key = bitcoin.ECKey.fromWIF("KwifDwSF7Hxdfr5SF1BBASaRAs3F5omKRYPAQ6hWVC5UUb1i6rmm");
+  var tx = new bitcoin.TransactionBuilder();
+  tx.addInput("405dc36b7a8d841b102a46360781b58c1db7764d380558f61d3f2cd38c146d98", 1);
+  tx.addOutput("mw6UqYnazuLESfUMhruAKt6DmQ3SWW475H", 90000);
+  tx.sign(0, key);
+  console.log(tx.build().toHex());
 } 
 executemain()
