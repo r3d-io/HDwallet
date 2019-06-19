@@ -5,10 +5,8 @@ const util = require('ethereumjs-util')
 const subutil = require('util')
 const wif = require('wif')
 const bitcoin = require("bitcoinjs-lib")
-const explorers = require('bitcore-explorers');
-const bitcore = require('bitcore-lib');
 const Web3 = require('web3')
-const ethTx = require('ethereumjs-tx').Transaction
+const request = require("request");
 
 async function executemain() {
   answers = await inquirer.prompt([
@@ -209,7 +207,7 @@ async function btcTransaction() {
     {
       name: 'amount',
       message: 'Enter Amount to send ?',
-      default: '10000'
+      default: '100'
     },
   ])
 
@@ -219,65 +217,27 @@ async function btcTransaction() {
   amount = Number(answers.amount);
   fee = 5000;
   const TestNet = bitcoin.networks.testnet
-  const insight = new explorers.Insight();
+  // const insight = new explorers.Insight();
 
   if (answers.operationType == "Raw transaction") {
     var key = bitcoin.ECPair.fromWIF(privateKey, TestNet);
     var tx = new bitcoin.TransactionBuilder(TestNet);
     tx.addInput("405dc36b7a8d841b102a46360781b58c1db7764d380558f61d3f2cd38c146d98", 0);
-    tx.addOutput(addressTo, amount);
+    tx.addOutput(toAddress, amount);
     tx.sign(0, key);
     console.log(tx.build().toHex());
   }
   else if (answers.operationType == "Broadcast") {
-    const unit = bitcore.Unit;
-    const minerFee = unit.fromMilis(0.128).toSatoshis();
-    const transactionAmount = unit.fromMilis(amount).toSatoshis();
-
-    insight.getUnspentUtxos(fromAddress, function (error, utxos) {
-      let balance = unit.fromSatoshis(0).toSatoshis();
-      for (var i = 0; i < utxos.length; i++) {
-        balance += unit.fromSatoshis(parseInt(utxos[i]['satoshis'])).toSatoshis();
+    const url = "https://api.blockcypher.com/v1/btc/test3/addrs/mrbxFvwjzsMbnMgrsGFFDkfyvk9oVEUbHb?unspentOnly=true";
+    request.get(url, (error, response, body) => {
+      let json = JSON.parse(body);
+      balance = 0
+      utxos = json.txrefs
+      for(i = 0; i< utxos.length; i++){
+        balance += Number(utxos[i].value)/1000000000
+        console.log(utxos[i].tx_hash);
       }
       console.log(balance)
-
-      if ((balance - transactionAmount - minerFee) > 0) {
-        try {
-          let bitcore_transaction = new bitcore.Transaction()
-            .from(utxos)
-            .to(toAddress, amount)
-            .fee(fee)
-            .change(toAddress)
-            .sign(privateKey);
-
-          if (bitcore_transaction.getSerializationError()) {
-            let error = bitcore_transaction.getSerializationError().message;
-            switch (error) {
-              case 'Some inputs have not been fully signed':
-                return reject('Please check your private key');
-                break;
-              default:
-                return reject(error);
-            }
-          }
-
-          insight.broadcast(bitcore_transaction, function (error, body) {
-            if (error) {
-              reject('Error in broadcast: ' + error);
-            } else {
-              resolve({
-                transactionId: body
-              });
-            }
-          });
-
-        } catch (error) {
-          return reject(error.message);
-        }
-      }
-      else {
-        console.log("insufficient balance")
-      }
     });
   }
 }
@@ -312,7 +272,6 @@ async function ethTransaction() {
   const rawTx = signed.rawTransaction
 
   signedTransaction = await web3.eth.sendSignedTransaction(rawTx)
-  console.log(subutil.inspect(signedTransaction, { showHidden: false, depth: null }))
   console.log(signedTransaction)
 }
 executemain()
