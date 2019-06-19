@@ -284,20 +284,21 @@ async function btcTransaction() {
 
 async function ethTransaction() {
   var web3 = new Web3(
-    new Web3.providers.HttpProvider('https://ropsten.infura.io/')
+    new Web3.providers.HttpProvider('https://ropsten.infura.io/v3/6d83b486e19548de928707c8336bf15b')
   );
-  var recieverAddress = '0x2FbF99b222E7CA87aFCA86F579d3e76d427DFB3A';
-  var key = "c3e4d55b6da69801e62dcf16e01581b406d597760b12d45e022f80753b52c1af"
-  var privateKey = new Buffer.from(key, 'hex');
-  var txValue = web3.utils.numberToHex(web3.utils.toWei('1', 'ether'));
+  let recieverAddress = '0x2FbF99b222E7CA87aFCA86F579d3e76d427DFB3A';
+  let key = "c3e4d55b6da69801e62dcf16e01581b406d597760b12d45e022f80753b52c1af"
+  // let privateKey = new Buffer.from(key, 'hex');
+  let txValue = web3.utils.numberToHex(web3.utils.toWei('.25', 'ether'));
   let gasPrice = await web3.eth.getGasPrice();
-  var gasPriceVal = web3.utils.numberToHex(gasPrice);
-  var gasLimit = web3.utils.numberToHex(25000);
-  console.log("==================", gasPrice, gasPriceVal)
-  var txData = web3.utils.asciiToHex('my first eth transactionAmount');
-  var nonceVal = await web3.eth.getTransactionCount('0x64d703057769DaC45052F3C36A5E4876Aa1516b5')
+  let gasPriceVal = web3.utils.numberToHex(gasPrice);
+  let gasLimit = web3.utils.numberToHex(25000);
+  let txData = web3.utils.asciiToHex('my first eth transactionAmount');
+  let nonceVal = await web3.eth.getTransactionCount('0x64d703057769DaC45052F3C36A5E4876Aa1516b5')
+
   nonceVal = web3.utils.numberToHex(nonceVal)
-  console.log(nonceVal, recieverAddress, gasPriceVal, gasLimit, txValue )
+  console.log(nonceVal, recieverAddress, gasPriceVal, gasLimit, txValue)
+
   const rawTransaction = {
     nonce: nonceVal,
     to: recieverAddress,
@@ -305,15 +306,25 @@ async function ethTransaction() {
     gasLimit: gasLimit, // 22000 Wei
     value: txValue,
     data: txData,
-    chainId: 3
+    chainId: 3,
   };
-  // const tx = new ethTx(params);
+  const signed = await web3.eth.accounts.signTransaction(rawTransaction, key)
+  const rawTx = signed.rawTransaction
+
+  const sendRawTx = rawTx =>
+    new Promise((resolve, reject) =>
+      web3.eth
+        .sendSignedTransaction(rawTx)
+        .on('transactionHash', resolve)
+        .on('error', reject)
+    )
+
+  sendRawTx(rawTx).then(hash => console.log({ hash }))
+
+  // const tx = new ethTx(rawTransaction);
   // tx.sign(privateKey);
   // const serializedTx = tx.serialize()
   // console.log(serializedTx.toString('hex'));
-  signed = await web3.eth.accounts.signTransaction(rawTransaction, privateKey)
-  console.log(signed)
-  web3.eth.sendSignedTransaction(signed)
   // web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex')).on('receipt', console.log);
 }
 executemain()
