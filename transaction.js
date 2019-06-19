@@ -29,7 +29,7 @@ exports.btcTransaction = async function () {
     {
       name: 'amount',
       message: 'Enter Amount to send ?',
-      default: '100'
+      default: '13280832'
     },
   ])
 
@@ -51,43 +51,43 @@ exports.btcTransaction = async function () {
   }
   else if (answers.operationType == "Broadcast") {
     const url = "https://api.blockcypher.com/v1/btc/test3/addrs/mrbxFvwjzsMbnMgrsGFFDkfyvk9oVEUbHb?unspentOnly=true";
+    let transaction
     request.get(url, (error, response, body) => {
+
       if (error) {
         console.log("unable to request server", error)
         return
       }
-      let key = bitcoin.ECPair.fromWIF(privateKey, TestNet);
-      let tx = new bitcoin.TransactionBuilder(TestNet);
+
       let json = JSON.parse(body);
       let utxos = json.txrefs
+      let key = bitcoin.ECPair.fromWIF(privateKey, TestNet);
+      let tx = new bitcoin.TransactionBuilder(TestNet);
+
       balance = 0
       for (i = 0; i < utxos.length && balance <= amount; i++) {
-        tx.addInput(utxos[i].tx_hash, i);
+        tx.addInput(utxos[i].tx_hash, 0);
         balance += Number(utxos[i].value)
         // console.log(utxos[i].tx_hash);
       }
+
       tx.addOutput(toAddress, amount);
       tx.sign(0, key);
-      console.log(tx.build().toHex());
-
-      var pushtx = {
-        tx: tx.build().toHex()
-      };
-
-      request.post(
-        {
-          url: "https://api.blockcypher.com//v1/bcy/test/txs/push",
-          form: pushtx
-        },
-        function (err, httpResponse, body) {
-          if (error) {
-            console.log("unable to request server", error)
-            return
-          } 
-          console.log("Response for your transaction \n",body);
-        }
-      );
+      transaction = tx.build().toHex()
+      console.log(transaction);
     });
+
+    var pushtx = {
+      tx: transaction
+    };
+    request.post({ url: 'https://api.blockcypher.com//v1/bcy/test/txs/push', form: JSON.stringify(pushtx) },
+      function (err, httpResponse, body) {
+        if (err) {
+          console.log("unable to request server", err)
+          return
+        }
+        console.log("Your transaction response code", "\n transaction hash \n" + body)
+      })
   }
 }
 
