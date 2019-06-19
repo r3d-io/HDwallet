@@ -1,10 +1,10 @@
 const bip39 = require('bip39')
 const hdkey = require('hdkey')
 const util = require('ethereumjs-util')
-const subutil = require('util')
 const wif = require('wif')
 const bitcoin = require("bitcoinjs-lib")
 const inquirer = require('inquirer');
+const subutil = require('util')
 
 async function getMnemonic() {
   answers = await inquirer.prompt([

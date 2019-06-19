@@ -2,6 +2,7 @@ const inquirer = require('inquirer');
 const bitcoin = require("bitcoinjs-lib");
 const request = require("request");
 const Web3 = require('web3');
+const subutil = require('util')
 
 exports.btcTransaction = async function () {
   answers = await inquirer.prompt([
@@ -29,7 +30,7 @@ exports.btcTransaction = async function () {
     {
       name: 'amount',
       message: 'Enter Amount to send ?',
-      default: '13280832'
+      default: '10921'
     },
   ])
 
@@ -46,6 +47,7 @@ exports.btcTransaction = async function () {
     var tx = new bitcoin.TransactionBuilder(TestNet);
     tx.addInput("405dc36b7a8d841b102a46360781b58c1db7764d380558f61d3f2cd38c146d98", 0);
     tx.addOutput(toAddress, amount);
+    tx.addOutput(fromAddress, amount-1000);
     tx.sign(0, key);
     console.log(tx.build().toHex());
   }
@@ -66,27 +68,34 @@ exports.btcTransaction = async function () {
 
       balance = 0
       for (i = 0; i < utxos.length && balance <= amount; i++) {
-        tx.addInput(utxos[i].tx_hash, 0);
+        tx.addInput(utxos[i].tx_hash, utxos[i].tx_output_n);
         balance += Number(utxos[i].value)
-        // console.log(utxos[i].tx_hash);
+        console.log(utxos[i].tx_hash);
       }
-
+      // tx.addInput(utxos[0].tx_hash, utxos[0].tx_output_n);
       tx.addOutput(toAddress, amount);
+      tx.addOutput(fromAddress, amount-1000);
       tx.sign(0, key);
+
       transaction = tx.build().toHex()
       console.log(transaction);
     });
 
-    var pushtx = {
-      tx: transaction
+    var options = {
+      uri: 'https://api.blockcypher.com/v1/btc/test3/txs/push',
+      method: 'POST',
+      json: {
+        "tx": transaction
+      }
     };
-    request.post({ url: 'https://api.blockcypher.com//v1/bcy/test/txs/push', form: JSON.stringify(pushtx) },
+    request(options,
       function (err, httpResponse, body) {
         if (err) {
           console.log("unable to request server", err)
           return
         }
-        console.log("Your transaction response code", "\n transaction hash \n" + body)
+        // console.log("transaction hash \n" + body)
+        console.log(subutil.inspect(body, {showHidden: false, depth: null}))
       })
   }
 }
