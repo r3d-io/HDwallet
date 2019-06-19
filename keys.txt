@@ -1,0 +1,14 @@
+https://gist.github.com/bitgord/7cc3b4269b22765613a1340d6695865e
+https://github.com/thinkocapo/bitcoin-address-generator/blob/master/index.js
+mx1UUd7M7aW8brLiMScKJwqwHJDCXGJNpA
+https://medium.com/coinmonks/signing-and-making-transactions-on-ethereum-using-web3-js-1b5663207d63
+
+Bitcoin
+rent brother child woman census chicken exchange pause famous hero grunt project
+ 0 mrbxFvwjzsMbnMgrsGFFDkfyvk9oVEUbHb cN5egrS6YMetqHYhdQzJXm5Uo6LekFs1VaXdWXA1zJjUjL3eJybC
+ 1 mw6UqYnazuLESfUMhruAKt6DmQ3SWW475H cSjDBN3befL5w3vJqfr68eyZcDtkXeH29488BENFqrHaUrCiGQVR
+
+Ethereum
+require pulse curve cage relief material voyage general act virus fabric wheat
+ 0 0x64d703057769DaC45052F3C36A5E4876Aa1516b5 c3e4d55b6da69801e62dcf16e01581b406d597760b12d45e022f80753b52c1af
+ 1 0x2FbF99b222E7CA87aFCA86F579d3e76d427DFB3A 39d19c303182effb19a7f714d1882754f60f28b54c3873da89ce6e9f9665668e
