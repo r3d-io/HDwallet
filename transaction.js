@@ -94,8 +94,8 @@ exports.btcTransaction = async function () {
           console.log("unable to request server", err)
           return
         }
-        // console.log("transaction hash \n" + body)
-        console.log(subutil.inspect(body, {showHidden: false, depth: null}))
+        console.log("transaction hash \n" + body.error)
+        // console.log(subutil.inspect(body, {showHidden: false, depth: null}))
       })
   }
 }
