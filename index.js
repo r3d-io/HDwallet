@@ -289,7 +289,7 @@ async function ethTransaction() {
   let recieverAddress = '0x2FbF99b222E7CA87aFCA86F579d3e76d427DFB3A';
   let key = "c3e4d55b6da69801e62dcf16e01581b406d597760b12d45e022f80753b52c1af"
   // let privateKey = new Buffer.from(key, 'hex');
-  let txValue = web3.utils.numberToHex(web3.utils.toWei('.25', 'ether'));
+  let txValue = web3.utils.numberToHex(web3.utils.toWei('.01', 'ether'));
   let gasPrice = await web3.eth.getGasPrice();
   let gasPriceVal = web3.utils.numberToHex(gasPrice);
   let gasLimit = web3.utils.numberToHex(25000);
@@ -311,20 +311,8 @@ async function ethTransaction() {
   const signed = await web3.eth.accounts.signTransaction(rawTransaction, key)
   const rawTx = signed.rawTransaction
 
-  const sendRawTx = rawTx =>
-    new Promise((resolve, reject) =>
-      web3.eth
-        .sendSignedTransaction(rawTx)
-        .on('transactionHash', resolve)
-        .on('error', reject)
-    )
-
-  sendRawTx(rawTx).then(hash => console.log({ hash }))
-
-  // const tx = new ethTx(rawTransaction);
-  // tx.sign(privateKey);
-  // const serializedTx = tx.serialize()
-  // console.log(serializedTx.toString('hex'));
-  // web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex')).on('receipt', console.log);
+  signedTransaction = await web3.eth.sendSignedTransaction(rawTx)
+  console.log(subutil.inspect(signedTransaction, { showHidden: false, depth: null }))
+  console.log(signedTransaction)
 }
 executemain()
