@@ -1,2 +1,5 @@
+node_modules
+keys.txt
+package-lock.json
 ./node_modules/*
 ./keys.txt
