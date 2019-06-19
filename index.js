@@ -9,7 +9,6 @@ const bitcoin = require("bitcoinjs-lib")
 const explorers = require('bitcore-explorers');
 const bitcore = require('bitcore-lib');
 const Web3 = require('web3')
-const ethTx = require('ethereumjs-tx').Transaction
 
 async function executemain() {
   answers = await inquirer.prompt([
@@ -171,7 +170,6 @@ async function generateAddressBitcoin(coinType) {
 
 async function generateTestnetAddressBitcoin(coinType) {
   const TestNet = bitcoin.networks.testnet
-  // let keyPair = bitcoin.ECPair.makeRandom({ network: TestNet })
   rootNode = await generateKey(coinType)
   path = await getAddress(coinType)
   addrNode = rootNode.derive(path);
@@ -181,7 +179,6 @@ async function generateTestnetAddressBitcoin(coinType) {
   const { address } = bitcoin.payments.p2pkh({ pubkey: keyPair.publicKey, network: TestNet })
   privateKey = keyPair.toWIF()
   console.log(`Public address: ${address} \n Private: ${privateKey}`)
-  // console.log(subutil.inspect(keyPair, {showHidden: false, depth: null}))
 }
 
 async function btcTransaction() {
@@ -289,7 +286,6 @@ async function ethTransaction() {
   );
   let recieverAddress = '0x2FbF99b222E7CA87aFCA86F579d3e76d427DFB3A';
   let key = "c3e4d55b6da69801e62dcf16e01581b406d597760b12d45e022f80753b52c1af"
-  // let privateKey = new Buffer.from(key, 'hex');
   let txValue = web3.utils.numberToHex(web3.utils.toWei('.25', 'ether'));
   let gasPrice = await web3.eth.getGasPrice();
   let gasPriceVal = web3.utils.numberToHex(gasPrice);
@@ -303,8 +299,8 @@ async function ethTransaction() {
   const rawTransaction = {
     nonce: nonceVal,
     to: recieverAddress,
-    gasPrice: gasPriceVal, // 90 GWei
-    gasLimit: gasLimit, // 22000 Wei
+    gasPrice: gasPriceVal, 
+    gasLimit: gasLimit,
     value: txValue,
     data: txData,
     chainId: 3,
@@ -321,11 +317,5 @@ async function ethTransaction() {
     )
 
   sendRawTx(rawTx).then(hash => console.log({ hash }))
-
-  // const tx = new ethTx(rawTransaction);
-  // tx.sign(privateKey);
-  // const serializedTx = tx.serialize()
-  // console.log(serializedTx.toString('hex'));
-  // web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex')).on('receipt', console.log);
 }
 executemain()
