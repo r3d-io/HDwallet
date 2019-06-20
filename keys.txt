@@ -1,7 +1,8 @@
 https://gist.github.com/bitgord/7cc3b4269b22765613a1340d6695865e
 https://github.com/thinkocapo/bitcoin-address-generator/blob/master/index.js
-mx1UUd7M7aW8brLiMScKJwqwHJDCXGJNpA
+
 https://medium.com/coinmonks/signing-and-making-transactions-on-ethereum-using-web3-js-1b5663207d63
+https://bitcoin.stackexchange.com/questions/tagged/bitcoinjs
 
 Bitcoin
 rent brother child woman census chicken exchange pause famous hero grunt project

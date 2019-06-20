@@ -1,6 +1,7 @@
 const inquirer = require('inquirer');
 const bitcoin = require("bitcoinjs-lib");
 const request = require("request");
+var rp = require('request-promise');
 const Web3 = require('web3');
 const subutil = require('util')
 
@@ -10,7 +11,7 @@ exports.btcTransaction = async function () {
       type: 'list',
       name: 'operationType',
       message: 'Do you want raw transaction or broadcast transaction on testnet?',
-      choices: ['Raw transaction', 'Broadcast'],
+      choices: ['Broadcast', 'Raw transaction'],
     },
     {
       name: 'myKey',
@@ -30,7 +31,7 @@ exports.btcTransaction = async function () {
     {
       name: 'amount',
       message: 'Enter Amount to send ?',
-      default: '10921'
+      default: '15842'
     },
   ])
 
@@ -38,7 +39,7 @@ exports.btcTransaction = async function () {
   fromAddress = answers.myAddress
   toAddress = answers.recieverAddress
   amount = Number(answers.amount);
-  fee = 5000;
+  let fees = 6000;
   const TestNet = bitcoin.networks.testnet
   // const insight = new explorers.Insight();
 
@@ -47,56 +48,70 @@ exports.btcTransaction = async function () {
     var tx = new bitcoin.TransactionBuilder(TestNet);
     tx.addInput("405dc36b7a8d841b102a46360781b58c1db7764d380558f61d3f2cd38c146d98", 0);
     tx.addOutput(toAddress, amount);
-    tx.addOutput(fromAddress, amount-1000);
+    tx.addOutput(fromAddress, amount - 1000);
     tx.sign(0, key);
     console.log(tx.build().toHex());
   }
   else if (answers.operationType == "Broadcast") {
-    const url = "https://api.blockcypher.com/v1/btc/test3/addrs/mrbxFvwjzsMbnMgrsGFFDkfyvk9oVEUbHb?unspentOnly=true";
+    const url = "https://api.blockcypher.com/v1/btc/test3/addrs/" + fromAddress + "?unspentOnly=true";
     let transaction
-    request.get(url, (error, response, body) => {
+    let json = JSON.parse(await rp.get(url))
+    let utxos = json.txrefs
+    let key = bitcoin.ECPair.fromWIF(privateKey, TestNet);
+    let transSum = 0
+    console.log(`Amount: ${amount} Account balance: ${json.balance} fees: ${fees}`)
+    // console.log(url, utxos)
+    
+    let tx = new bitcoin.TransactionBuilder(TestNet);
+    tx.setVersion(2);
+    for (let utx of utxos) {
+      console.log("Output Hash:", utx.tx_hash, "Output Index:", utx.tx_output_n, "utx value", utx.value );
+      tx.addInput(utx.tx_hash, utx.tx_output_n);
+      transSum += utx.value;
+      if (transSum >= amount ) break;
+    }
+    let change = transSum - amount;
+    console.log(`final amount to send ${transSum} change ${change} remaining ${json.balance-transSum+change}`)
+    // tx.addInput(utxos[0].tx_hash, utxos[0].tx_output_n);
+    tx.addOutput(toAddress, amount);
+    tx.addOutput(fromAddress, change);
+    tx.sign(0, key);
+    transaction = tx.build().toHex()
+    console.log(transaction);
 
-      if (error) {
-        console.log("unable to request server", error)
-        return
-      }
-
-      let json = JSON.parse(body);
-      let utxos = json.txrefs
-      let key = bitcoin.ECPair.fromWIF(privateKey, TestNet);
-      let tx = new bitcoin.TransactionBuilder(TestNet);
-
-      balance = 0
-      for (i = 0; i < utxos.length && balance <= amount; i++) {
-        tx.addInput(utxos[i].tx_hash, utxos[i].tx_output_n);
-        balance += Number(utxos[i].value)
-        console.log(utxos[i].tx_hash);
-      }
-      // tx.addInput(utxos[0].tx_hash, utxos[0].tx_output_n);
-      tx.addOutput(toAddress, amount);
-      tx.addOutput(fromAddress, amount-1000);
-      tx.sign(0, key);
-
-      transaction = tx.build().toHex()
-      console.log(transaction);
-    });
+    // var options = {
+    //   method: 'POST',
+    //   uri: 'https://api.blockcypher.com/v1/btc/test3/txs/push',
+    //   json: {
+    //     "tx": transaction
+    //   }
+    // };
 
     var options = {
-      uri: 'https://api.blockcypher.com/v1/btc/test3/txs/push',
       method: 'POST',
-      json: {
-        "tx": transaction
-      }
+      uri: 'https://chain.so/api/v2/send_tx/BTCTEST',
+      body: { tx_hex: transaction },
+      json: true // Automatically stringifies the body to JSON
     };
-    request(options,
-      function (err, httpResponse, body) {
-        if (err) {
-          console.log("unable to request server", err)
-          return
-        }
-        console.log("transaction hash \n" + body.error)
-        // console.log(subutil.inspect(body, {showHidden: false, depth: null}))
+
+
+    rp(options)
+      .then(function (parsedBody) {
+        console.log(parsedBody)
       })
+      .catch(function (err) {
+        console.log(err.statusCode, err.message, err.error)
+      });
+
+    // request(hash,
+    //   function (err, httpResponse, body) {
+    //     if (err) {
+    //       console.log("unable to request server", err)
+    //       return
+    //     }
+    //     // console.log("transaction hash \n" + body)
+    //     console.log(subutil.inspect(body, { showHidden: false, depth: null }))
+    //   })
   }
 }
 
