@@ -39,7 +39,7 @@ exports.btcTransaction = async function () {
   fromAddress = answers.myAddress
   toAddress = answers.recieverAddress
   amount = Number(answers.amount);
-  let fees = 6000;
+  let fees = 2236;
   const TestNet = bitcoin.networks.testnet
   // const insight = new explorers.Insight();
 
