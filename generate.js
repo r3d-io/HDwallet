@@ -64,7 +64,6 @@ exports.AddressBitcoin = async function(rootNode, path) {
 
 exports.TestnetAddressBitcoin = async function(rootNode, path) {
   const TestNet = bitcoin.networks.testnet
-  // let keyPair = bitcoin.ECPair.makeRandom({ network: TestNet })
   const addrNode = rootNode.derive(path);
   const privateKey = wif.encode(128, addrNode._privateKey, true)
   const keyPair = bitcoin.ECPair.fromWIF(privateKey)
@@ -72,5 +71,4 @@ exports.TestnetAddressBitcoin = async function(rootNode, path) {
   const privateKey = keyPair.toWIF()
   const { address } = bitcoin.payments.p2pkh({ pubkey: keyPair.publicKey, network: TestNet })
   console.log(`Public address: ${address} \n Private: ${privateKey}`)
-  // console.log(subutil.inspect(keyPair, {showHidden: false, depth: null}))
 }

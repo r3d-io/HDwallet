@@ -43,7 +43,6 @@ async function executemain() {
     process.exit()
   }
   console.log('\n')
-  // executemain()
 }
 
 executemain()
