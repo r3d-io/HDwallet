@@ -6,7 +6,7 @@ const Web3 = require('web3');
 const subutil = require('util')
 
 exports.btcTransaction = async function () {
-  answers = await inquirer.prompt([
+  userInput = await inquirer.prompt([
     {
       type: 'list',
       name: 'operationType',
@@ -14,12 +14,12 @@ exports.btcTransaction = async function () {
       choices: ['Broadcast', 'Raw transaction'],
     },
     {
-      name: 'myKey',
+      name: 'senderKey',
       message: 'Enter Your private key fot transaction signing ?',
       default: 'cN5egrS6YMetqHYhdQzJXm5Uo6LekFs1VaXdWXA1zJjUjL3eJybC'
     },
     {
-      name: 'myAddress',
+      name: 'senderAddress',
       message: 'Enter Your address used for recieving change ?',
       default: 'mrbxFvwjzsMbnMgrsGFFDkfyvk9oVEUbHb'
     },
@@ -35,14 +35,14 @@ exports.btcTransaction = async function () {
     },
   ])
 
-  privateKey = answers.myKey
-  fromAddress = answers.myAddress
-  toAddress = answers.recieverAddress
-  amount = Number(answers.amount);
+  privateKey = userInput.senderKey
+  fromAddress = userInput.senderAddress
+  toAddress = userInput.recieverAddress
+  amount = Number(userInput.amount);
   const TestNet = bitcoin.networks.testnet
   // const insight = new explorers.Insight();
   
-  if (answers.operationType == "Raw transaction") {
+  if (userInput.operationType == "Raw transaction") {
     var key = bitcoin.ECPair.fromWIF(privateKey, TestNet);
     var tx = new bitcoin.TransactionBuilder(TestNet);
     tx.addInput("405dc36b7a8d841b102a46360781b58c1db7764d380558f61d3f2cd38c146d98", 0);
@@ -51,59 +51,66 @@ exports.btcTransaction = async function () {
     tx.sign(0, key);
     console.log(tx.build().toHex());
   }
-  else if (answers.operationType == "Broadcast") {
+  else if (userInput.operationType == "Broadcast") {
     const url = "https://api.blockcypher.com/v1/btc/test3/addrs/" + fromAddress + "?unspentOnly=true";
-    let fees = 2236;
-    // amount = amount + fees
+    let fees = 5000;
+    amount = amount + fees
     let transaction
     let json = JSON.parse(await rp.get(url))
     let utxos = json.txrefs
     let key = bitcoin.ECPair.fromWIF(privateKey, TestNet);
     let transSum = 0
+    let utxosarr = []
     console.log(`Amount: ${amount} Account balance: ${json.balance} fees: ${fees}`)
     // console.log(url, utxos)
     
     let tx = new bitcoin.TransactionBuilder(TestNet);
     tx.setVersion(2);
-    for (let utx of utxos) {
-      tx.addInput(utx.tx_hash, utx.tx_output_n);
-      console.log("Output Hash:", utx.tx_hash, "Output Index:", utx.tx_output_n, "utx value", utx.value );
-      transSum += utx.value;
+    for (let index=0; index < utxos.length; index++) {
+      console.log("Output Hash:", utxos[index].tx_hash, "Output Index:", utxos[index].tx_output_n, "utx value", utxos[index].value );
+      transSum += utxos[index].value;
+      utxosarr.push(utxos[index].tx_hash)
+      tx.addInput(utxos[index].tx_hash, utxos[index].tx_output_n);
       if (transSum >= amount ) break;
     }
     let change = transSum - amount;
-    console.log(`final amount to send ${transSum} change ${change} remaining ${json.balance-transSum+change} \n`)
-    // tx.addInput(utxos[0].tx_hash, utxos[0].tx_output_n);
+
     tx.addOutput(toAddress, amount);
     tx.addOutput(fromAddress, change);
-    tx.sign(0, key);
+    for (let index=0; index < utxosarr.length; index++) {
+      tx.sign(index, key);
+    }
     transaction = tx.build().toHex()
+
+    console.log(`final amount to send ${transSum} change ${change} remaining ${json.balance-transSum+change} \n`)
     console.log(transaction);
 
-    // var options = {
+    var options = {
+      method: 'POST',
+      // uri: 'https://chain.so/api/v2/send_tx/BTCTEST',
+      // uri:"https://testnet-api.smartbit.com.au/v1/blockchain/pushtx",
+      uri:"https://api.blockcypher.com/v1/btc/test3/txs/push",
+      body: {
+        tx:transaction
+      },
+      json: true
+    };
+     
+    rp(options)
+    .then(function (parsedBody) {
+      console.log(parsedBody)
+    })
+    .catch(function (err) {
+      console.log(err.statusCode, err.message, err.error)
+    });
+    
+    // var hash = {
     //   method: 'POST',
     //   uri: 'https://api.blockcypher.com/v1/btc/test3/txs/push',
     //   json: {
     //     "tx": transaction
     //   }
     // };
-
-    var options = {
-      method: 'POST',
-      uri: 'https://chain.so/api/v2/send_tx/BTCTEST',
-      body: { tx_hex: transaction },
-      json: true // Automatically stringifies the body to JSON
-    };
-
-
-    rp(options)
-      .then(function (parsedBody) {
-        console.log(parsedBody)
-      })
-      .catch(function (err) {
-        console.log(err.statusCode, err.message, err.error)
-      });
-
     // request(hash,
     //   function (err, httpResponse, body) {
     //     if (err) {
@@ -117,7 +124,7 @@ exports.btcTransaction = async function () {
 }
 
 exports.ethTransaction = async function () {
-  answers = await inquirer.prompt([
+  userInput = await inquirer.prompt([
     {
       type: 'list',
       name: 'operationType',
@@ -146,10 +153,10 @@ exports.ethTransaction = async function () {
     },
   ])
 
-  privateKey = answers.myKey
-  fromAddress = answers.myAddress
-  toAddress = answers.recieverAddress
-  amount = answers.amount
+  privateKey = userInput.myKey
+  fromAddress = userInput.myAddress
+  toAddress = userInput.recieverAddress
+  amount = userInput.amount
 
   var web3 = new Web3(
     new Web3.providers.HttpProvider('https://ropsten.infura.io/v3/6d83b486e19548de928707c8336bf15b')

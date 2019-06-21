@@ -3,6 +3,7 @@ https://github.com/thinkocapo/bitcoin-address-generator/blob/master/index.js
 
 https://medium.com/coinmonks/signing-and-making-transactions-on-ethereum-using-web3-js-1b5663207d63
 https://bitcoin.stackexchange.com/questions/tagged/bitcoinjs
+https://github.com/bitcoinjs/bitcoinjs-lib/issues/528
 
 Bitcoin
 rent brother child woman census chicken exchange pause famous hero grunt project
