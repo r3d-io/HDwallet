@@ -5,60 +5,7 @@ const wif = require('wif')
 const bitcoin = require("bitcoinjs-lib")
 const inquirer = require('inquirer');
 const subutil = require('util')
-
-async function getMnemonic() {
-  answers = await inquirer.prompt([
-    {
-      type: 'list',
-      name: 'options',
-      message: 'Do you have a mnemonic or not?',
-      choices: ['Yes', 'No'],
-    },
-  ])
-
-  if (answers.options == "Yes") {
-    response = await inquirer.prompt([
-      {
-        name: 'mnemonic',
-        message: 'Enter your mnemonic',
-        default: 'require pulse curve cage relief material voyage general act virus fabric wheat',
-      },
-    ])
-    return response.mnemonic
-  }
-  else if (answers.options == "No") {
-    mnemonic = generate.Mnemonic()
-    return mnemonic
-  }
-}
-
-async function getAddress(coinType) {
-  answers = await inquirer.prompt([
-    {
-      type: 'list',
-      name: 'changeType',
-      message: 'Please specify if it is an internal or external address?',
-      choices: ['Internal', 'External'],
-    },
-    {
-      name: 'addressNum',
-      message: 'Enter the number for which you want to generate address ?',
-      default: '0'
-    },
-  ])
-  path = "m/44'/"
-  if (coinType == "btc")
-    path = path + "0'/0'/"
-  else if (coinType == "eth")
-    path = path + "60'/0'/"
-  if (answers.changeType == "Internal")
-    path = path + "0/"
-  else if (answers.changeType == "External")
-    path = path + "1/"
-  path = path + answers.addressNum
-  return path
-}
-
+var getter = require('./getter')
 
 exports.Mnemonic = function() {
   let mnemonic = bip39.generateMnemonic()
@@ -68,7 +15,7 @@ exports.Mnemonic = function() {
 }
 
 generateKey = async function(coinType) {
-  mnemonic = await getMnemonic()
+  mnemonic = await getter.getMnemonic()
   const seed = bip39.mnemonicToSeedSync(mnemonic)
   rootNode = hdkey.fromMasterSeed(seed)
   console.log("Root private key " + rootNode.privateExtendedKey + "\nRoot public key " + rootNode.publicExtendedKey)
@@ -95,7 +42,7 @@ exports.Key = generateKey;
 
 exports.AddressEther = async function(coinType) {
   rootNode = await generateKey(coinType)
-  path = await getAddress(coinType)
+  path = await getter.getAddress(coinType)
   const addrNode = rootNode.derive(path);
   const pubKey = util.privateToPublic(addrNode._privateKey);
   const addr = util.publicToAddress(pubKey).toString('hex');
@@ -106,7 +53,7 @@ exports.AddressEther = async function(coinType) {
 
 exports.AddressBitcoin = async function(coinType){
   rootNode = await generateKey(coinType)
-  path = await getAddress(coinType)
+  path = await getter.getAddress(coinType)
   addrNode = rootNode.derive(path);
   privateKey = wif.encode(128, addrNode._privateKey, true)
   keyPair = bitcoin.ECPair.fromWIF(privateKey)
@@ -120,7 +67,7 @@ exports.TestnetAddressBitcoin = async function(coinType) {
   const TestNet = bitcoin.networks.testnet
   // let keyPair = bitcoin.ECPair.makeRandom({ network: TestNet })
   rootNode = await generateKey(coinType)
-  path = await getAddress(coinType)
+  path = await getter.getAddress(coinType)
   addrNode = rootNode.derive(path);
   privateKey = wif.encode(128, addrNode._privateKey, true)
   keyPair = bitcoin.ECPair.fromWIF(privateKey)

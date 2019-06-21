@@ -1,6 +1,7 @@
 const inquirer = require('inquirer')
 var transaction = require('./transaction');
 var generate = require('./generate');
+var getter = require('./getter')
 
 async function executemain() {
   answers = await inquirer.prompt([
@@ -21,13 +22,15 @@ async function executemain() {
   }
   else if (answers.options == "BTC transaction") {
     // generateTestnetAddressBitcoin('btc')
-    transaction.btcTransaction('btc')
+    userInput = getter.getUserInput(0)
+    transaction.btcTransaction(userInput)
   }
   else if (answers.options == "ETH transaction") {
-    transaction.ethTransaction('eth')
+    userInput = getter.getUserInput(60)
+    transaction.ethTransaction(userInput)
   }
   else if (answers.options == "Generate address") {
-    coinType = await getCoinType()
+    coinType = await getter.getCoinType()
     if (coinType == 'eth')
       generate.AddressEther(coinType)
     else if (coinType == 'btc')
@@ -38,18 +41,6 @@ async function executemain() {
   }
   console.log('\n')
   // executemain()
-}
-
-async function getCoinType() {
-  coinType = await inquirer.prompt([
-    {
-      type: 'list',
-      name: 'currencyType',
-      message: 'Which currency you want to use Ethereum or Bitcoin',
-      choices: ['eth', 'btc'],
-    },
-  ])
-  return coinType.currencyType
 }
 
 executemain()
