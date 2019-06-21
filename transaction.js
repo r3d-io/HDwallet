@@ -72,7 +72,7 @@ exports.btcTransaction = async function () {
       if (transSum >= amount ) break;
     }
     let change = transSum - amount;
-    console.log(`final amount to send ${transSum} change ${change} remaining ${json.balance-transSum+change}`)
+    console.log(`final amount to send ${transSum} change ${change} remaining ${json.balance-transSum+change} \n`)
     // tx.addInput(utxos[0].tx_hash, utxos[0].tx_output_n);
     tx.addOutput(toAddress, amount);
     tx.addOutput(fromAddress, change);
@@ -117,18 +117,52 @@ exports.btcTransaction = async function () {
 }
 
 exports.ethTransaction = async function () {
+  answers = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'operationType',
+      message: 'Do you want raw transaction or broadcast transaction on testnet?',
+      choices: ['Broadcast', 'Raw transaction'],
+    },
+    {
+      name: 'myKey',
+      message: 'Enter Your private key fot transaction signing ?',
+      default: 'c3e4d55b6da69801e62dcf16e01581b406d597760b12d45e022f80753b52c1af'
+    },
+    {
+      name: 'myAddress',
+      message: 'Enter Your address used for recieving change ?',
+      default: '0x64d703057769DaC45052F3C36A5E4876Aa1516b5'
+    },
+    {
+      name: 'recieverAddress',
+      message: 'Enter Reciever address ?',
+      default: '0x2FbF99b222E7CA87aFCA86F579d3e76d427DFB3A'
+    },
+    {
+      name: 'amount',
+      message: 'Enter Amount to send ?',
+      default: '.01'
+    },
+  ])
+
+  privateKey = answers.myKey
+  fromAddress = answers.myAddress
+  toAddress = answers.recieverAddress
+  amount = answers.amount
+
   var web3 = new Web3(
     new Web3.providers.HttpProvider('https://ropsten.infura.io/v3/6d83b486e19548de928707c8336bf15b')
   );
-  let recieverAddress = '0x2FbF99b222E7CA87aFCA86F579d3e76d427DFB3A';
-  let key = "c3e4d55b6da69801e62dcf16e01581b406d597760b12d45e022f80753b52c1af"
+  let recieverAddress = toAddress;
+  let key = privateKey
   // let privateKey = new Buffer.from(key, 'hex');
-  let txValue = web3.utils.numberToHex(web3.utils.toWei('.01', 'ether'));
+  let txValue = web3.utils.numberToHex(web3.utils.toWei(amount, 'ether'));
   let gasPrice = await web3.eth.getGasPrice();
   let gasPriceVal = web3.utils.numberToHex(gasPrice);
   let gasLimit = web3.utils.numberToHex(25000);
   let txData = web3.utils.asciiToHex('my first eth transactionAmount');
-  let nonceVal = await web3.eth.getTransactionCount('0x64d703057769DaC45052F3C36A5E4876Aa1516b5')
+  let nonceVal = await web3.eth.getTransactionCount(fromAddress)
 
   nonceVal = web3.utils.numberToHex(nonceVal)
   console.log(nonceVal, recieverAddress, gasPriceVal, gasLimit, txValue)
