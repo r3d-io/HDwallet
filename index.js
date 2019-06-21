@@ -14,14 +14,13 @@ async function executemain() {
   ])
 
   if (answers.options == "Generate mnemonic") {
-    generate.Mnemonic()
+    generate.mnemonic()
   }
   else if (answers.options == "Generate key") {
     coinType = await getter.getCoinType()
-    generate.Key(coinType)
+    generate.key(coinType)
   }
   else if (answers.options == "BTC transaction") {
-    // generateTestnetAddressBitcoin('btc')
     userInput = await getter.getUserInput(0)
     transaction.btcTransaction(userInput,5000)
   }
@@ -35,9 +34,9 @@ async function executemain() {
     path = await getter.getAddress(coinType)
 
     if (coinType == 'eth')
-      generate.AddressEther(rootNode, path)
+      generate.addressEther(rootNode, path)
     else if (coinType == 'btc')
-      generate.TestnetAddressBitcoin(rootNode, path)
+      generate.testnetAddressBitcoin(rootNode, path)
   }
   else {
     process.exit()

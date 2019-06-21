@@ -1,6 +1,8 @@
 const bitcoin = require('bitcoinjs-lib');
 const rp = require('request-promise');
 const Web3 = require('web3');
+const dotenv = require('dotenv');
+dotenv.config();
 
 exports.btcTransaction = async function (userInput, fees) {
 
@@ -10,7 +12,7 @@ exports.btcTransaction = async function (userInput, fees) {
   let toAddress = userInput.recieverAddress
   let amount = Number(userInput.amount) + fees;
   let key = bitcoin.ECPair.fromWIF(privateKey, TestNet);
-  const url = "https://api.blockcypher.com/v1/btc/test3/addrs/" + fromAddress + "?unspentOnly=true";
+  const url = `https://api.blockcypher.com/v1/btc/test3/addrs/${fromAddress}?unspentOnly=true`;
   let json = JSON.parse(await rp.get(url))
   let utxos = json.txrefs
   let transaction
@@ -44,23 +46,24 @@ exports.btcTransaction = async function (userInput, fees) {
   }
 }
 
-exports.ethTransaction = async function (userInput,gasLimit) {
+exports.ethTransaction = async function (userInput, gasLimit) {
   privateKey = userInput.myKey
   fromAddress = userInput.myAddress
   toAddress = userInput.recieverAddress
   amount = userInput.amount
 
   var web3 = new Web3(
-    new Web3.providers.HttpProvider('https://ropsten.infura.io/v3/6d83b486e19548de928707c8336bf15b')
+    new Web3.providers.HttpProvider(process.env.ETH_TESTNET)
   );
   let recieverAddress = toAddress;
   let txValue = web3.utils.numberToHex(web3.utils.toWei(amount, 'ether'));
   let gasPrice = await web3.eth.getGasPrice();
   let gasPriceVal = web3.utils.numberToHex(gasPrice);
-  gasLimit = web3.utils.numberToHex(gasLimit);
   let txData = web3.utils.asciiToHex('my first eth transactionAmount');
+  web3.eth.getBlock("latest", false, (error, result) => {
+    gasLimit = web3.utils.numberToHex(result.gasLimit)
+  });
   let nonceVal = await web3.eth.getTransactionCount(fromAddress)
-
   nonceVal = web3.utils.numberToHex(nonceVal)
   console.log(nonceVal, recieverAddress, gasPriceVal, gasLimit, txValue)
 
@@ -75,21 +78,24 @@ exports.ethTransaction = async function (userInput,gasLimit) {
   };
   const signed = await web3.eth.accounts.signTransaction(rawTransaction, privateKey)
   const rawTx = signed.rawTransaction
+  console.log(rawTx)
 
-  const sendRawTx = rawTx =>
-  new Promise((resolve, reject) =>
-    web3.eth
-      .sendSignedTransaction(rawTx)
-      .on('transactionHash', resolve)
-      .on('error', reject)
-  )
-  sendRawTx(rawTx).then(hash => console.log({ hash }))
+  if (userInput.operationType == "Broadcast") {
+    const sendRawTx = rawTx =>
+      new Promise((resolve, reject) =>
+        web3.eth
+          .sendSignedTransaction(rawTx)
+          .on('transactionHash', resolve)
+          .on('error', reject)
+      )
+    sendRawTx(rawTx).then(hash => console.log({ hash }))
+  }
 }
 
 function sendBtcTransaction(transaction) {
   var options = {
     method: 'POST',
-    uri: "https://api.blockcypher.com/v1/btc/test3/txs/push",
+    uri: process.env.BTC_TESTNET,
     body: {
       tx: transaction
     },

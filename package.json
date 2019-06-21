@@ -4,13 +4,15 @@
   "description": "A node js implementation of bip 32 39 44",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
   },
   "author": "Anuj",
   "license": "ISC",
   "dependencies": {
     "bip39": "^3.0.2",
     "bitcoinjs-lib": "^5.0.5",
+    "dotenv": "^8.0.0",
     "ethereumjs-tx": "^2.0.0",
     "ethereumjs-util": "^6.1.0",
     "hdkey": "^1.1.1",

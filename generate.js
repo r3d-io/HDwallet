@@ -6,7 +6,7 @@ const bitcoin = require('bitcoinjs-lib')
 const subutil = require('util')
 var getter = require('./getter')
 
-exports.Mnemonic = function() {
+exports.mnemonic = function() {
   let mnemonic = bip39.generateMnemonic()
   let seed = bip39.mnemonicToSeedSync(mnemonic)
   console.log(`Mnemonic ${mnemonic} \nSeed ${seed.toString('hex')}`)
@@ -41,9 +41,9 @@ generateKey = async function(coinType) {
   console.log(`Extended private key  ${extPrivateKey} \nExtended public key  ${extPublicKey}`)
   console.log(`Derived path private key  ${privateKey} \nDerived path public key  ${publicKey}`)
 }
-exports.Key = generateKey;
+exports.key = generateKey;
 
-exports.AddressEther = async function(rootNode, path) {
+exports.addressEther = async function(rootNode, path) {
   const addrNode = rootNode.derive(path);
   const pubKey = util.privateToPublic(addrNode._privateKey);
   const addr = util.publicToAddress(pubKey).toString('hex');
@@ -52,7 +52,7 @@ exports.AddressEther = async function(rootNode, path) {
   return address
 }
 
-exports.AddressBitcoin = async function(rootNode, path) {
+exports.addressBitcoin = async function(rootNode, path) {
   const addrNode = rootNode.derive(path);
   const privateKey = wif.encode(128, addrNode._privateKey, true)
   const keyPair = bitcoin.ECPair.fromWIF(privateKey)
@@ -62,7 +62,7 @@ exports.AddressBitcoin = async function(rootNode, path) {
   return address
 }
 
-exports.TestnetAddressBitcoin = async function(rootNode, path) {
+exports.testnetAddressBitcoin = async function(rootNode, path) {
   const TestNet = bitcoin.networks.testnet
   const addrNode = rootNode.derive(path);
   const privateKey = wif.encode(128, addrNode._privateKey, true)
