@@ -5,61 +5,49 @@ var rp = require('request-promise');
 const Web3 = require('web3');
 const subutil = require('util');
 
-exports.btcTransaction = async function (userInput) {
- 
+exports.btcTransaction = async function (userInput, fees) {
+
   const TestNet = bitcoin.networks.testnet
   let privateKey = userInput.senderKey
   let fromAddress = userInput.senderAddress
   let toAddress = userInput.recieverAddress
-  let amount = Number(userInput.amount);
+  let amount = Number(userInput.amount) + fees;
   let key = bitcoin.ECPair.fromWIF(privateKey, TestNet);
-  
-  if (userInput.operationType == "Raw transaction") {
-    var tx = new bitcoin.TransactionBuilder(TestNet);
-    tx.addInput("405dc36b7a8d841b102a46360781b58c1db7764d380558f61d3f2cd38c146d98", 0);
-    tx.addOutput(toAddress, amount);
-    tx.addOutput(fromAddress, amount - 1000);
-    tx.sign(0, key);
-    console.log(tx.build().toHex());
+  let json = JSON.parse(await rp.get(url))
+  let utxos = json.txrefs
+  let transaction
+  let transSum = 0
+  let utxosarr = []
+  const url = "https://api.blockcypher.com/v1/btc/test3/addrs/" + fromAddress + "?unspentOnly=true";
+  console.log(`Amount: ${amount} Account balance: ${json.balance} fees: ${fees}`)
+
+  let tx = new bitcoin.TransactionBuilder(TestNet);
+  tx.setVersion(2);
+
+  for (let index = 0; index < utxos.length; index++) {
+    console.log("Output Hash:", utxos[index].tx_hash, "Output Index:", utxos[index].tx_output_n, "utx value", utxos[index].value);
+    transSum += utxos[index].value;
+    utxosarr.push(utxos[index].tx_hash)
+    tx.addInput(utxos[index].tx_hash, utxos[index].tx_output_n);
+    if (transSum >= amount) break;
   }
-  else if (userInput.operationType == "Broadcast") {
-    const url = "https://api.blockcypher.com/v1/btc/test3/addrs/" + fromAddress + "?unspentOnly=true";
-    let fees = 5000;
-    amount = amount + fees
-    let transaction
-    let json = JSON.parse(await rp.get(url))
-    let utxos = json.txrefs
-    let transSum = 0
-    let utxosarr = []
-    console.log(`Amount: ${amount} Account balance: ${json.balance} fees: ${fees}`)
+  let change = transSum - amount;
 
-    let tx = new bitcoin.TransactionBuilder(TestNet);
-    tx.setVersion(2);
+  tx.addOutput(toAddress, amount);
+  tx.addOutput(fromAddress, change);
+  for (let index = 0; index < utxosarr.length; index++) {
+    tx.sign(index, key);
+  }
+  transaction = tx.build().toHex()
 
-    for (let index=0; index < utxos.length; index++) {
-      console.log("Output Hash:", utxos[index].tx_hash, "Output Index:", utxos[index].tx_output_n, "utx value", utxos[index].value );
-      transSum += utxos[index].value;
-      utxosarr.push(utxos[index].tx_hash)
-      tx.addInput(utxos[index].tx_hash, utxos[index].tx_output_n);
-      if (transSum >= amount ) break;
-    }
-    let change = transSum - amount;
-
-    tx.addOutput(toAddress, amount);
-    tx.addOutput(fromAddress, change);
-    for (let index=0; index < utxosarr.length; index++) {
-      tx.sign(index, key);
-    }
-    transaction = tx.build().toHex()
-
-    console.log(`final amount to send ${transSum} change ${change} remaining ${json.balance-transSum+change} \n`)
-    console.log(transaction);
+  console.log(`final amount to send ${transSum} change ${change} remaining ${json.balance - transSum + change} \n`)
+  console.log(transaction);
+  if (userInput.operationType == "Broadcast") {
     sendBtcTransaction(transaction)
   }
 }
 
 exports.ethTransaction = async function (userInput) {
- 
   privateKey = userInput.myKey
   fromAddress = userInput.myAddress
   toAddress = userInput.recieverAddress
@@ -95,21 +83,21 @@ exports.ethTransaction = async function (userInput) {
   console.log(signedTransaction)
 }
 
-function sendBtcTransaction(transaction){
+function sendBtcTransaction(transaction) {
   var options = {
     method: 'POST',
-    uri:"https://api.blockcypher.com/v1/btc/test3/txs/push",
+    uri: "https://api.blockcypher.com/v1/btc/test3/txs/push",
     body: {
-      tx:transaction
+      tx: transaction
     },
     json: true
   };
-   
+
   rp(options)
-  .then(function (parsedBody) {
-    console.log(parsedBody)
-  })
-  .catch(function (err) {
-    console.log(err.statusCode, err.message, err.error)
-  });
+    .then(function (parsedBody) {
+      console.log(parsedBody)
+    })
+    .catch(function (err) {
+      console.log(err.statusCode, err.message, err.error)
+    });
 }
