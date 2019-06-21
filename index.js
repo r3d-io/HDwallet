@@ -17,24 +17,27 @@ async function executemain() {
     generate.Mnemonic()
   }
   else if (answers.options == "Generate key") {
-    coinType = await getCoinType()
+    coinType = await getter.getCoinType()
     generate.Key(coinType)
   }
   else if (answers.options == "BTC transaction") {
     // generateTestnetAddressBitcoin('btc')
     userInput = getter.getUserInput(0)
-    transaction.btcTransaction(userInput)
+    transaction.btcTransaction(userInput,5000)
   }
   else if (answers.options == "ETH transaction") {
     userInput = getter.getUserInput(60)
-    transaction.ethTransaction(userInput)
+    transaction.ethTransaction(userInput,25000)
   }
   else if (answers.options == "Generate address") {
     coinType = await getter.getCoinType()
+    rootNode = await generate.RootNode()
+    path = await getter.getAddress(coinType)
+
     if (coinType == 'eth')
-      generate.AddressEther(coinType)
+      generate.AddressEther(rootNode, path)
     else if (coinType == 'btc')
-      generate.TestnetAddressBitcoin(coinType)
+      generate.TestnetAddressBitcoin(rootNode, path)
   }
   else {
     process.exit()

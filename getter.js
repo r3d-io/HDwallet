@@ -1,3 +1,6 @@
+const inquirer = require('inquirer');
+var generate = require('./generate');
+
 exports.getCoinType = async function() {
   coinType = await inquirer.prompt([
     {
