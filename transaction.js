@@ -39,10 +39,9 @@ exports.btcTransaction = async function () {
   fromAddress = answers.myAddress
   toAddress = answers.recieverAddress
   amount = Number(answers.amount);
-  let fees = 2236;
   const TestNet = bitcoin.networks.testnet
   // const insight = new explorers.Insight();
-
+  
   if (answers.operationType == "Raw transaction") {
     var key = bitcoin.ECPair.fromWIF(privateKey, TestNet);
     var tx = new bitcoin.TransactionBuilder(TestNet);
@@ -54,6 +53,8 @@ exports.btcTransaction = async function () {
   }
   else if (answers.operationType == "Broadcast") {
     const url = "https://api.blockcypher.com/v1/btc/test3/addrs/" + fromAddress + "?unspentOnly=true";
+    let fees = 2236;
+    // amount = amount + fees
     let transaction
     let json = JSON.parse(await rp.get(url))
     let utxos = json.txrefs
@@ -65,8 +66,8 @@ exports.btcTransaction = async function () {
     let tx = new bitcoin.TransactionBuilder(TestNet);
     tx.setVersion(2);
     for (let utx of utxos) {
-      console.log("Output Hash:", utx.tx_hash, "Output Index:", utx.tx_output_n, "utx value", utx.value );
       tx.addInput(utx.tx_hash, utx.tx_output_n);
+      console.log("Output Hash:", utx.tx_hash, "Output Index:", utx.tx_output_n, "utx value", utx.value );
       transSum += utx.value;
       if (transSum >= amount ) break;
     }
