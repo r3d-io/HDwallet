@@ -1,9 +1,6 @@
-const inquirer = require('inquirer');
 const bitcoin = require('bitcoinjs-lib');
-const request = require('request');
 var rp = require('request-promise');
 const Web3 = require('web3');
-const subutil = require('util');
 
 exports.btcTransaction = async function (userInput, fees) {
 
@@ -47,7 +44,7 @@ exports.btcTransaction = async function (userInput, fees) {
   }
 }
 
-exports.ethTransaction = async function (userInput) {
+exports.ethTransaction = async function (userInput,gasLimit) {
   privateKey = userInput.myKey
   fromAddress = userInput.myAddress
   toAddress = userInput.recieverAddress
@@ -60,7 +57,7 @@ exports.ethTransaction = async function (userInput) {
   let txValue = web3.utils.numberToHex(web3.utils.toWei(amount, 'ether'));
   let gasPrice = await web3.eth.getGasPrice();
   let gasPriceVal = web3.utils.numberToHex(gasPrice);
-  let gasLimit = web3.utils.numberToHex(25000);
+  let gasLimit = web3.utils.numberToHex(gasLimit);
   let txData = web3.utils.asciiToHex('my first eth transactionAmount');
   let nonceVal = await web3.eth.getTransactionCount(fromAddress)
 
@@ -70,8 +67,8 @@ exports.ethTransaction = async function (userInput) {
   const rawTransaction = {
     nonce: nonceVal,
     to: recieverAddress,
-    gasPrice: gasPriceVal, // 90 GWei
-    gasLimit: gasLimit, // 22000 Wei
+    gasPrice: gasPriceVal, //GWei
+    gasLimit: gasLimit, //Wei
     value: txValue,
     data: txData,
     chainId: 3,
@@ -79,8 +76,14 @@ exports.ethTransaction = async function (userInput) {
   const signed = await web3.eth.accounts.signTransaction(rawTransaction, privateKey)
   const rawTx = signed.rawTransaction
 
-  signedTransaction = await web3.eth.sendSignedTransaction(rawTx)
-  console.log(signedTransaction)
+  const sendRawTx = rawTx =>
+  new Promise((resolve, reject) =>
+    web3.eth
+      .sendSignedTransaction(rawTx)
+      .on('transactionHash', resolve)
+      .on('error', reject)
+  )
+  sendRawTx(rawTx).then(hash => console.log({ hash }))
 }
 
 function sendBtcTransaction(transaction) {
