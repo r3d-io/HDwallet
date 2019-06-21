@@ -1,5 +1,5 @@
 const bitcoin = require('bitcoinjs-lib');
-var rp = require('request-promise');
+const rp = require('request-promise');
 const Web3 = require('web3');
 
 exports.btcTransaction = async function (userInput, fees) {
@@ -10,12 +10,12 @@ exports.btcTransaction = async function (userInput, fees) {
   let toAddress = userInput.recieverAddress
   let amount = Number(userInput.amount) + fees;
   let key = bitcoin.ECPair.fromWIF(privateKey, TestNet);
+  const url = "https://api.blockcypher.com/v1/btc/test3/addrs/" + fromAddress + "?unspentOnly=true";
   let json = JSON.parse(await rp.get(url))
   let utxos = json.txrefs
   let transaction
   let transSum = 0
   let utxosarr = []
-  const url = "https://api.blockcypher.com/v1/btc/test3/addrs/" + fromAddress + "?unspentOnly=true";
   console.log(`Amount: ${amount} Account balance: ${json.balance} fees: ${fees}`)
 
   let tx = new bitcoin.TransactionBuilder(TestNet);
@@ -57,7 +57,7 @@ exports.ethTransaction = async function (userInput,gasLimit) {
   let txValue = web3.utils.numberToHex(web3.utils.toWei(amount, 'ether'));
   let gasPrice = await web3.eth.getGasPrice();
   let gasPriceVal = web3.utils.numberToHex(gasPrice);
-  let gasLimit = web3.utils.numberToHex(gasLimit);
+  gasLimit = web3.utils.numberToHex(gasLimit);
   let txData = web3.utils.asciiToHex('my first eth transactionAmount');
   let nonceVal = await web3.eth.getTransactionCount(fromAddress)
 

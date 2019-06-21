@@ -1,7 +1,7 @@
 const inquirer = require('inquirer')
-var transaction = require('./transaction');
-var generate = require('./generate');
-var getter = require('./getter')
+const transaction = require('./transaction');
+const generate = require('./generate');
+const getter = require('./getter')
 
 async function executemain() {
   answers = await inquirer.prompt([
@@ -22,11 +22,11 @@ async function executemain() {
   }
   else if (answers.options == "BTC transaction") {
     // generateTestnetAddressBitcoin('btc')
-    userInput = getter.getUserInput(0)
+    userInput = await getter.getUserInput(0)
     transaction.btcTransaction(userInput,5000)
   }
   else if (answers.options == "ETH transaction") {
-    userInput = getter.getUserInput(60)
+    userInput = await getter.getUserInput(60)
     transaction.ethTransaction(userInput,25000)
   }
   else if (answers.options == "Generate address") {
