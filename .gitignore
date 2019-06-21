@@ -3,3 +3,5 @@ keys.txt
 package-lock.json
 ./node_modules/*
 ./keys.txt
+node_modules
+keys.txt
