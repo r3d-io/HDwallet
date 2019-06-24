@@ -12,13 +12,13 @@
 - *ethereum.js* Contains methods for **Ethereum** address,key generation and transaction broadcasting <br />
 
 ### Method description
-*[ethereum.js](./ethereum.js)*  
-- generateKey(rootNode)
+**[ethereum.js](./ethereum.js)**  
+- *generateKey(rootNode)*<br />
   It only require rootNode for key generation. rootNode can be derieved from your personal mnemonic or else it can be obainted from getMnemonic method of generate.js 
-- generateAddress(rootNode, path)
+- *generateAddress(rootNode, path)*<br />
   The rootNode is an object required to derieve public key. it can be obtained with help of rootNode function present in generate module
   path here refers to bip44 path of the wallet address you want to generate. it is in the form of ("m/44'/60'/0'/0/0")
-- createTransaction (userInput, gasLimit)
+- *createTransaction (userInput, gasLimit)*<br />
   userInput is a dictionary containing parameters provided by the user
   - operationType (Wether you want to only generate raw transaction hash or broadcast and perform actual transaction)
   - senderKey (Your private key)
@@ -27,13 +27,13 @@
   - amount (Amount to be send in satoshi)
   gasLimit refers to maximum gas amount you are ready to pay. If you want to set it automatically you can pass a negative value
 
-*[bitcoin.js](./bitcoin.js)*  
-- generateKey(rootNode)
+**[bitcoin.js](./bitcoin.js)**  
+- *generateKey(rootNode)*<br />
   It only require rootNode for key generation. rootNode can be derieved from your personal mnemonic or else it can be obainted from getMnemonic method of generate.js 
-- generateAddress(rootNode, path)
+- *generateAddress(rootNode, path)*<br />
   The rootNode is an object required to derieve public key. it can be obtained with help of rootNode function present in generate module
   path here refers to bip44 path of the wallet address you want to generate. it is in the form of ("m/44'/0'/0'/0/0")
-- createTransaction (userInput, fees)
+- *createTransaction (userInput, fees)*<br />
   userInput is a dictionary containing parameters provided by the user
   - operationType (Wether you want to only generate raw transaction hash or broadcast and perform actual transaction)
   - senderKey (Your private key)
@@ -42,8 +42,8 @@
   - amount (Amount to be send in satoshi)
   fees refers to maximum amount of miner fee you are ready to pay. If you want to set it automatically you can pass a negative value
 
-*[generate.js](./generate.js)*
- - menmonic ()
+**[generate.js](./generate.js)**
+ - *menmonic ()*<br />
   generate mnemonic for user if not present 
- - rootNode ()
+ - *rootNode ()*<br />
   generate rootNode required for public private key pair derivation
