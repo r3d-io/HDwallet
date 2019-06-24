@@ -1,7 +1,7 @@
-const bip39 = require('bip39')
-const hdkey = require('hdkey')
-const subutil = require('util')
-var getter = require('./getter')
+const bip39 = require('bip39');
+const hdkey = require('hdkey');
+const subutil = require('util');
+var getter = require('./getter.js');
 
 exports.mnemonic = function() {
   let mnemonic = bip39.generateMnemonic()
